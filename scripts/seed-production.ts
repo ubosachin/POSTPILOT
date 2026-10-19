@@ -16,6 +16,12 @@ import {
   SocialAccountModel,
 } from '../src/lib/models';
 
+if (typeof (process as any).loadEnvFile === 'function') {
+  try {
+    (process as any).loadEnvFile('.env.local');
+  } catch {}
+}
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/postpilot';
 
 async function seedProduction() {
@@ -57,12 +63,10 @@ async function seedProduction() {
       console.log(`ℹ️ Existing production owner found: ${user.email}`);
     }
 
-    const defaultWorkspaceId = 'ws_postpilot_main';
-    let workspace = await WorkspaceModel.findById(defaultWorkspaceId);
+    let workspace = await WorkspaceModel.findOne({ name: 'PostPilot Growth Lab' });
 
     if (!workspace) {
       workspace = await WorkspaceModel.create({
-        _id: defaultWorkspaceId,
         name: 'PostPilot Growth Lab',
         ownerId: user._id.toString(),
         planId: 'pro',
@@ -70,18 +74,22 @@ async function seedProduction() {
         createdAt: new Date(),
       });
       console.log(`✅ Created production primary workspace: ${workspace.name}`);
+    } else {
+      console.log(`ℹ️ Existing primary workspace found: ${workspace.name}`);
     }
+
+    const wsId = workspace._id.toString();
 
     // 3. Ensure Owner Membership
     await MembershipModel.findOneAndUpdate(
-      { workspaceId: defaultWorkspaceId, userId: user._id.toString() },
+      { workspaceId: wsId, userId: user._id.toString() },
       { role: 'owner' },
       { upsert: true }
     );
 
     // 4. Ensure Credit Wallet
     await CreditWalletModel.findOneAndUpdate(
-      { workspaceId: defaultWorkspaceId },
+      { workspaceId: wsId },
       {
         $setOnInsert: {
           balance: 150,
@@ -96,7 +104,7 @@ async function seedProduction() {
 
     // 5. Ensure Brand Profile
     await BrandProfileModel.findOneAndUpdate(
-      { workspaceId: defaultWorkspaceId },
+      { workspaceId: wsId },
       {
         voice: 'Insightful, Pragmatic & Direct Builder',
         audience: 'Founders, Creators, Solo Engineers',
