@@ -12,14 +12,13 @@ function LoginForm() {
   const redirectTarget = searchParams.get('redirect') || '/';
   const errorParam = searchParams.get('error');
 
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (errorParam) {
       if (errorParam === 'google_not_configured') {
-        setError('Google OAuth is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env.local file.');
+        setError('Google OAuth is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your environment variables.');
       } else if (errorParam === 'invalid_state') {
         setError('Login session expired or security verification failed. Please try signing in again.');
       } else if (errorParam === 'email_not_verified') {
@@ -38,13 +37,7 @@ function LoginForm() {
     window.location.href = '/api/auth/google';
   };
 
-  const handleLogin = async (customEmail?: string) => {
-    const targetEmail = (customEmail || email).trim();
-    if (!targetEmail) {
-      setError('Please enter a valid work email address.');
-      return;
-    }
-
+  const handleDevLogin = async (targetEmail: string) => {
     setLoading(true);
     setError(null);
 
@@ -191,41 +184,8 @@ function LoginForm() {
           <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
           <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
         </svg>
-        {loading ? 'Authenticating...' : 'Continue with Google'}
+        {loading ? 'Authenticating with Google...' : 'Continue with Google'}
       </button>
-
-      {/* Divider */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
-        <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
-        <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '0.04em' }}>OR CONTINUE WITH EMAIL</span>
-        <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
-      </div>
-
-      {/* Email Input Flow */}
-      <form onSubmit={(e) => { e.preventDefault(); handleLogin(email); }} style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-            Work Email Address
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="founder@yourcompany.com"
-            className="input-field"
-            style={{ width: '100%', padding: '12px 14px', fontSize: '0.92rem' }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading || !email.trim()}
-          className="btn btn-primary"
-          style={{ width: '100%', padding: '12px', fontSize: '0.92rem', fontWeight: 700 }}
-        >
-          {loading ? 'Authenticating...' : 'Continue with Email →'}
-        </button>
-      </form>
 
       {/* Free credits bonus notice */}
       <div style={{
@@ -287,7 +247,7 @@ function LoginForm() {
               <button
                 key={r.role}
                 type="button"
-                onClick={() => handleLogin(r.email)}
+                onClick={() => handleDevLogin(r.email)}
                 disabled={loading}
                 style={{
                   background: '#f8fafc',
