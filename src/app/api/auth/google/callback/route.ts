@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
 
     // 4. Find or create user
     let isNewUser = false;
-    let user = Array.from(memoryStore.users.values()).find((u) => u.email.toLowerCase() === email);
+    let user = await persistenceBridge.getUserByEmail(email);
     let workspaceId = 'ws_postpilot_main';
     let role: UserRole = 'owner';
 
@@ -163,13 +163,14 @@ export async function GET(req: NextRequest) {
     } else {
       // Existing user: link workspace and role
       const currentUserId = user.id;
-      const membership = Array.from(memoryStore.memberships.values()).find((m) => m.userId === currentUserId);
+      const membership = await persistenceBridge.getMembershipByUser(currentUserId);
       if (membership) {
         workspaceId = membership.workspaceId;
         role = membership.role;
       }
       if (avatar && !user.avatar) {
         user.avatar = avatar;
+        await persistenceBridge.persistUser(user);
       }
     }
 

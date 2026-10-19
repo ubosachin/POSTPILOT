@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse } from '@/lib/auth';
-import { connectToDatabase, memoryStore } from '@/lib/db';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
 
   const workspaceId = session.workspaceId;
 
-  const jobs = memoryStore.getPublishingJobs(workspaceId).map((job) => {
+  const rawJobs = await persistenceBridge.getPublishingJobs(workspaceId);
+  const jobs = rawJobs.map((job) => {
     const variant = memoryStore.contentVariants.get(job.variantId);
     const socialAccount = memoryStore.socialAccounts.get(job.socialAccountId);
     const result = Array.from(memoryStore.publishResults.values()).find((r) => r.jobId === job.id);

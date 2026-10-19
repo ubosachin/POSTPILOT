@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { connectToDatabase, memoryStore } from '@/lib/db';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   await connectToDatabase();
 
   const workspaceId = session.workspaceId;
-  const logs = memoryStore.getAuditLogs(workspaceId);
+  const logs = await persistenceBridge.getAuditLogs(workspaceId);
 
   return NextResponse.json({
     success: true,

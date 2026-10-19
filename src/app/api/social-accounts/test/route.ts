@@ -23,7 +23,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Account ID is required' }, { status: 400 });
     }
 
-    const account = memoryStore.socialAccounts.get(accountId);
+    let account = memoryStore.socialAccounts.get(accountId);
+    if (!account || account.workspaceId !== workspaceId) {
+      account = (await persistenceBridge.getSocialAccount(accountId, workspaceId)) || undefined;
+    }
     if (!account || account.workspaceId !== workspaceId) {
       return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
     }

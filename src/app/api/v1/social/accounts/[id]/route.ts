@@ -34,7 +34,10 @@ export async function DELETE(
   await connectToDatabase();
 
   const { id } = await params;
-  const account = memoryStore.socialAccounts.get(id);
+  let account = memoryStore.socialAccounts.get(id);
+  if (!account || account.workspaceId !== session.workspaceId) {
+    account = (await persistenceBridge.getSocialAccount(id, session.workspaceId)) || undefined;
+  }
 
   if (!account || account.workspaceId !== session.workspaceId) {
     return NextResponse.json({ success: false, error: 'Social account not found' }, { status: 404 });

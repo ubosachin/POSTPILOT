@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
 
+  await connectToDatabase();
+
   const workspaceId = session.workspaceId;
 
   // 1. Gather all jobs with variant metadata
-  const jobs = memoryStore.getPublishingJobs(workspaceId).map((job) => {
+  const rawJobs = await persistenceBridge.getPublishingJobs(workspaceId);
+  const jobs = rawJobs.map((job) => {
     const variant = memoryStore.contentVariants.get(job.variantId);
     const socialAccount = memoryStore.socialAccounts.get(job.socialAccountId);
     const result = Array.from(memoryStore.publishResults.values()).find((r) => r.jobId === job.id);
@@ -31,7 +34,7 @@ export async function GET(req: NextRequest) {
   const dailyTopics = memoryStore.getDailyTopics(workspaceId);
 
   // 3. Gather automations
-  const automations = memoryStore.getContentAutomations(workspaceId);
+  const automations = await persistenceBridge.getContentAutomations(workspaceId);
 
   return NextResponse.json({
     success: true,

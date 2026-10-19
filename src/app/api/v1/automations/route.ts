@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { connectToDatabase, memoryStore } from '@/lib/db';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { automationEngine } from '@/lib/automations/automationEngine';
 
 export async function GET(req: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   await connectToDatabase();
 
-  const automations = memoryStore.getContentAutomations(session.workspaceId);
+  const automations = await persistenceBridge.getContentAutomations(session.workspaceId);
   return NextResponse.json({
     success: true,
     automations,

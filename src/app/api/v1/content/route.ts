@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse } from '@/lib/auth';
-import { connectToDatabase, memoryStore } from '@/lib/db';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
   await connectToDatabase();
 
   const workspaceId = session.workspaceId;
-  const items = memoryStore.getContentItems(workspaceId);
-  const variants = memoryStore.getContentVariants(workspaceId);
+  const items = await persistenceBridge.getContentItems(workspaceId);
+  const variants = await persistenceBridge.getContentVariants(workspaceId);
 
   // Group variants by contentItemId
   const itemsWithVariants = items.map((item) => ({

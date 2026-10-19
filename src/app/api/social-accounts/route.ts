@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
 
   const workspaceId = session.workspaceId;
 
-  const accounts = memoryStore.getSocialAccounts(workspaceId).map((acc) => {
+  const rawAccounts = await persistenceBridge.getSocialAccounts(workspaceId);
+  const accounts = rawAccounts.map((acc) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { encryptedCredentials, ...safe } = acc;
     return {
@@ -74,13 +75,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check unique constraint per workspace
-    const existing = Array.from(memoryStore.socialAccounts.values()).find(
-      (a) => a.workspaceId === workspaceId && a.platform === platform && a.accountId === accountId
+    const accountId_clean = accountId.replace(/^@/, '');
+
+    // Check unique constraint per workspace directly from DB & memory
+    const existingAccounts = await persistenceBridge.getSocialAccounts(workspaceId);
+    const existing = existingAccounts.find(
+      (a) => a.workspaceId === workspaceId && a.platform === platform && a.accountId.toLowerCase() === accountId_clean.toLowerCase()
     );
 
     const encrypted = encryptCredentials(credentials);
-    const accountId_clean = accountId.replace(/^@/, '');
 
     let account: SocialAccount;
     if (existing) {
@@ -148,7 +151,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Social account ID is required' }, { status: 400 });
     }
 
-    const account = memoryStore.socialAccounts.get(id);
+    let account = memoryStore.socialAccounts.get(id);
+    if (!account || account.workspaceId !== workspaceId) {
+      account = (await persistenceBridge.getSocialAccount(id, workspaceId)) || undefined;
+    }
     if (!account || account.workspaceId !== workspaceId) {
       return NextResponse.json({ success: false, error: 'Social account not found' }, { status: 404 });
     }
@@ -161,8 +167,9 @@ export async function PATCH(req: NextRequest) {
       }
 
       // Check collision with another account in the same workspace
-      const duplicate = Array.from(memoryStore.socialAccounts.values()).find(
-        (a) => a.id !== id && a.workspaceId === workspaceId && a.platform === account.platform && a.accountId.toLowerCase() === cleanAccountId.toLowerCase()
+      const currentAccounts = await persistenceBridge.getSocialAccounts(workspaceId);
+      const duplicate = currentAccounts.find(
+        (a) => a.id !== id && a.platform === account.platform && a.accountId.toLowerCase() === cleanAccountId.toLowerCase()
       );
       if (duplicate) {
         return NextResponse.json(
@@ -271,7 +278,10 @@ export async function DELETE(req: NextRequest) {
 
     await connectToDatabase();
 
-    const account = memoryStore.socialAccounts.get(accountId);
+    let account = memoryStore.socialAccounts.get(accountId);
+    if (!account || account.workspaceId !== workspaceId) {
+      account = (await persistenceBridge.getSocialAccount(accountId, workspaceId)) || undefined;
+    }
     if (!account || account.workspaceId !== workspaceId) {
       return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
     }

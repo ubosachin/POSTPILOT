@@ -519,6 +519,358 @@ class PersistenceBridge {
       console.warn('[PersistenceBridge] Error persisting audit log:', (e as Error).message);
     }
   }
+
+  // --- Query Helpers (MongoDB Atlas with memoryStore fallback & instant caching) ---
+
+  async getSocialAccounts(workspaceId: string): Promise<SocialAccount[]> {
+    if (await this.ensureMongoActive()) {
+      try {
+        const docs = await SocialAccountModel.find({ workspaceId }).lean();
+        if (docs && docs.length > 0) {
+          const accounts: SocialAccount[] = docs.map((doc: any) => ({
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            platform: doc.platform as any,
+            accountId: doc.accountId,
+            displayName: doc.displayName,
+            encryptedCredentials: doc.encryptedCredentials,
+            status: doc.status as any,
+            lastVerifiedAt: doc.lastVerifiedAt,
+            errorMessage: doc.errorMessage,
+            createdAt: doc.createdAt || new Date(),
+          }));
+          for (const acc of accounts) {
+            memoryStore.socialAccounts.set(acc.id, acc);
+          }
+          return accounts;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying social accounts from MongoDB:', (e as Error).message);
+      }
+    }
+    return memoryStore.getSocialAccounts(workspaceId);
+  }
+
+  async getSocialAccount(id: string, workspaceId: string): Promise<SocialAccount | null> {
+    if (await this.ensureMongoActive()) {
+      try {
+        const cleanId = id.replace(/^@/, '');
+        const doc: any = await SocialAccountModel.findOne({
+          $or: [{ _id: id }, { _id: cleanId }, { accountId: cleanId }, { accountId: id }],
+          workspaceId,
+        }).lean();
+        if (doc) {
+          const acc: SocialAccount = {
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            platform: doc.platform as any,
+            accountId: doc.accountId,
+            displayName: doc.displayName,
+            encryptedCredentials: doc.encryptedCredentials,
+            status: doc.status as any,
+            lastVerifiedAt: doc.lastVerifiedAt,
+            errorMessage: doc.errorMessage,
+            createdAt: doc.createdAt || new Date(),
+          };
+          memoryStore.socialAccounts.set(acc.id, acc);
+          return acc;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying social account from MongoDB:', (e as Error).message);
+      }
+    }
+    const memAcc = memoryStore.socialAccounts.get(id);
+    if (memAcc && memAcc.workspaceId === workspaceId) return memAcc;
+    return null;
+  }
+
+  async getContentItems(workspaceId: string): Promise<ContentItem[]> {
+    if (await this.ensureMongoActive()) {
+      try {
+        const docs = await ContentItemModel.find({ workspaceId }).sort({ createdAt: -1 }).lean();
+        if (docs && docs.length > 0) {
+          const items: ContentItem[] = docs.map((doc: any) => ({
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            topic: doc.topic,
+            goal: doc.goal,
+            sourceText: doc.sourceText,
+            status: doc.status as any,
+            createdBy: doc.createdBy,
+            createdAt: doc.createdAt || new Date(),
+            updatedAt: doc.updatedAt || new Date(),
+          }));
+          for (const item of items) {
+            memoryStore.contentItems.set(item.id, item);
+          }
+          return items;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying content items:', (e as Error).message);
+      }
+    }
+    return memoryStore.getContentItems(workspaceId);
+  }
+
+  async getContentVariants(workspaceId: string, contentItemId?: string): Promise<ContentVariant[]> {
+    if (await this.ensureMongoActive()) {
+      try {
+        const filter: any = { workspaceId };
+        if (contentItemId) filter.contentItemId = contentItemId;
+        const docs = await ContentVariantModel.find(filter).lean();
+        if (docs && docs.length > 0) {
+          const variants: ContentVariant[] = docs.map((doc: any) => ({
+            id: doc._id?.toString() || doc.id,
+            contentItemId: doc.contentItemId,
+            workspaceId: doc.workspaceId,
+            platform: doc.platform as any,
+            text: doc.text,
+            approvalStatus: doc.approvalStatus as any,
+            version: doc.version || 1,
+            warnings: doc.warnings || [],
+            quoraQuestionUrl: doc.quoraQuestionUrl,
+            quoraAnswerStatus: doc.quoraAnswerStatus as any,
+            createdAt: doc.createdAt || new Date(),
+            updatedAt: doc.updatedAt || new Date(),
+          }));
+          for (const v of variants) {
+            memoryStore.contentVariants.set(v.id, v);
+          }
+          return variants;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying variants:', (e as Error).message);
+      }
+    }
+    return memoryStore.getContentVariants(workspaceId, contentItemId);
+  }
+
+  async getContentAutomations(workspaceId: string): Promise<ContentAutomation[]> {
+    if (await this.ensureMongoActive()) {
+      try {
+        const docs = await ContentAutomationModel.find({ workspaceId }).sort({ createdAt: -1 }).lean();
+        if (docs && docs.length > 0) {
+          const autos: ContentAutomation[] = docs.map((doc: any) => ({
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            name: doc.name,
+            topics: doc.topics || [],
+            dailyInstructions: doc.dailyInstructions,
+            targetAudience: doc.targetAudience,
+            brandVoice: doc.brandVoice,
+            platforms: doc.platforms as any,
+            socialAccountIds: doc.socialAccountIds || [],
+            startDate: doc.startDate,
+            endDate: doc.endDate,
+            timezone: doc.timezone,
+            activeDays: doc.activeDays || [1, 2, 3, 4, 5],
+            postsPerDay: doc.postsPerDay || 1,
+            publishingTimes: doc.publishingTimes || ['09:00'],
+            distributionMode: doc.distributionMode as any,
+            approvalMode: doc.approvalMode as any,
+            fallbackPolicy: doc.fallbackPolicy as any,
+            status: doc.status as any,
+            createdAt: doc.createdAt || new Date(),
+            updatedAt: doc.updatedAt || new Date(),
+          }));
+          for (const a of autos) {
+            memoryStore.contentAutomations.set(a.id, a);
+          }
+          return autos;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying automations:', (e as Error).message);
+      }
+    }
+    return memoryStore.getContentAutomations(workspaceId);
+  }
+
+  async getPublishingJobs(workspaceId: string): Promise<PublishingJob[]> {
+    if (await this.ensureMongoActive()) {
+      try {
+        const docs = await PublishingJobModel.find({ workspaceId }).sort({ scheduledAt: 1 }).lean();
+        if (docs && docs.length > 0) {
+          const jobs: PublishingJob[] = docs.map((doc: any) => ({
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            variantId: doc.variantId,
+            socialAccountId: doc.socialAccountId,
+            scheduledAt: doc.scheduledAt,
+            status: doc.status as any,
+            attempts: doc.attempts || 0,
+            maxAttempts: doc.maxAttempts || 5,
+            idempotencyKey: doc.idempotencyKey,
+            lockedAt: doc.lockedAt,
+            lockedBy: doc.lockedBy,
+            createdAt: doc.createdAt || new Date(),
+            updatedAt: doc.updatedAt || new Date(),
+          }));
+          for (const j of jobs) {
+            memoryStore.publishingJobs.set(j.id, j);
+          }
+          return jobs;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying publishing jobs:', (e as Error).message);
+      }
+    }
+    return memoryStore.getPublishingJobs(workspaceId);
+  }
+
+  async getAuditLogs(workspaceId: string): Promise<AuditLog[]> {
+    if (await this.ensureMongoActive()) {
+      try {
+        const docs = await AuditLogModel.find({ workspaceId }).sort({ timestamp: -1 }).limit(100).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((doc: any) => ({
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            actorId: doc.actorId,
+            actorName: doc.actorName,
+            action: doc.action,
+            resourceType: doc.resourceType,
+            resourceId: doc.resourceId,
+            timestamp: doc.timestamp || new Date(),
+            details: doc.details,
+          }));
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying audit logs:', (e as Error).message);
+      }
+    }
+    return memoryStore.getAuditLogs(workspaceId);
+  }
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    const cleanEmail = email.trim().toLowerCase();
+    const memUser = Array.from(memoryStore.users.values()).find((u) => u.email.toLowerCase() === cleanEmail);
+    if (memUser) return memUser;
+
+    if (await this.ensureMongoActive()) {
+      try {
+        const doc: any = await UserModel.findOne({ email: cleanEmail }).lean();
+        if (doc) {
+          const user: User = {
+            id: doc._id?.toString() || doc.id,
+            email: doc.email,
+            name: doc.name,
+            authProvider: (doc.authProvider as any) || 'local',
+            avatar: doc.avatar,
+            createdAt: doc.createdAt || new Date(),
+          };
+          memoryStore.users.set(user.id, user);
+          return user;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying user by email:', (e as Error).message);
+      }
+    }
+    return null;
+  }
+
+  async getUserById(userId: string): Promise<User | null> {
+    const memUser = memoryStore.users.get(userId);
+    if (memUser) return memUser;
+
+    if (await this.ensureMongoActive()) {
+      try {
+        const doc: any = await UserModel.findOne({ _id: userId }).lean();
+        if (doc) {
+          const user: User = {
+            id: doc._id?.toString() || doc.id,
+            email: doc.email,
+            name: doc.name,
+            authProvider: (doc.authProvider as any) || 'local',
+            avatar: doc.avatar,
+            createdAt: doc.createdAt || new Date(),
+          };
+          memoryStore.users.set(user.id, user);
+          return user;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying user by id:', (e as Error).message);
+      }
+    }
+    return null;
+  }
+
+  async getWorkspaceById(workspaceId: string): Promise<Workspace | null> {
+    const memWs = memoryStore.workspaces.get(workspaceId);
+    if (memWs) return memWs;
+
+    if (await this.ensureMongoActive()) {
+      try {
+        const doc: any = await WorkspaceModel.findOne({ _id: workspaceId }).lean();
+        if (doc) {
+          const ws: Workspace = {
+            id: doc._id?.toString() || doc.id,
+            name: doc.name,
+            ownerId: doc.ownerId,
+            planId: (doc.planId as any) || 'starter',
+            timezone: doc.timezone || 'UTC',
+            createdAt: doc.createdAt || new Date(),
+          };
+          memoryStore.workspaces.set(ws.id, ws);
+          return ws;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying workspace by id:', (e as Error).message);
+      }
+    }
+    return null;
+  }
+
+  async getMembershipByUser(userId: string): Promise<Membership | null> {
+    const memMem = Array.from(memoryStore.memberships.values()).find((m) => m.userId === userId);
+    if (memMem) return memMem;
+
+    if (await this.ensureMongoActive()) {
+      try {
+        const doc: any = await MembershipModel.findOne({ userId }).lean();
+        if (doc) {
+          const m: Membership = {
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            userId: doc.userId,
+            role: (doc.role as any) || 'owner',
+            createdAt: doc.createdAt || new Date(),
+          };
+          memoryStore.memberships.set(m.id, m);
+          return m;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying membership by user:', (e as Error).message);
+      }
+    }
+    return null;
+  }
+
+  async getBrandProfile(workspaceId: string): Promise<BrandProfile | null> {
+    const memBp = memoryStore.brandProfiles.get(workspaceId);
+    if (memBp) return memBp;
+
+    if (await this.ensureMongoActive()) {
+      try {
+        const doc: any = await BrandProfileModel.findOne({ workspaceId }).lean();
+        if (doc) {
+          const bp: BrandProfile = {
+            id: doc._id?.toString() || doc.id,
+            workspaceId: doc.workspaceId,
+            voice: doc.voice,
+            audience: doc.audience,
+            topics: doc.topics || [],
+            rules: doc.rules || [],
+            updatedAt: doc.updatedAt || new Date(),
+          };
+          memoryStore.brandProfiles.set(workspaceId, bp);
+          return bp;
+        }
+      } catch (e) {
+        console.warn('[PersistenceBridge] Error querying brand profile:', (e as Error).message);
+      }
+    }
+    return null;
+  }
 }
 
 export const persistenceBridge = new PersistenceBridge();

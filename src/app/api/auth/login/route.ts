@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const authProvider = body.authProvider || 'local';
 
     let isNewUser = false;
-    let user = Array.from(memoryStore.users.values()).find((u) => u.email.toLowerCase() === email);
+    let user = await persistenceBridge.getUserByEmail(email);
     let workspaceId = 'ws_postpilot_main';
     let role: UserRole = 'owner';
 
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Existing user: retrieve their workspace
       const currentUserId = user.id;
-      const membership = Array.from(memoryStore.memberships.values()).find((m) => m.userId === currentUserId);
+      const membership = await persistenceBridge.getMembershipByUser(currentUserId);
       if (membership) {
         workspaceId = membership.workspaceId;
         role = membership.role as UserRole;
