@@ -23,7 +23,8 @@ import {
   X,
   Compass,
   Lock,
-  ShieldAlert
+  ShieldAlert,
+  User
 } from 'lucide-react';
 import PostPilotLogo from '@/components/PostPilotLogo';
 import { UserRole } from '@/types';
@@ -123,6 +124,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { label: 'Quora Workspace', href: '/quora', icon: HelpCircle, badge: 'Manual' },
     { label: 'Social Accounts', href: '/social-accounts', icon: Share2 },
     { label: 'Credits & Billing', href: '/billing', icon: CreditCard, badge: userRole === 'viewer' ? 'View Only' : undefined },
+    { label: 'My Profile', href: '/profile', icon: User },
     { label: 'Settings', href: '/settings', icon: Settings },
     { 
       label: 'Admin & Audit', 
@@ -397,7 +399,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           justifyContent: 'space-between',
           gap: '10px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          <Link 
+            href="/profile"
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px', 
+              minWidth: 0,
+              textDecoration: 'none',
+              padding: '4px',
+              borderRadius: '8px',
+              transition: 'background 0.15s ease',
+              flex: 1
+            }}
+            title="View Profile"
+          >
             <div style={{
               width: '32px',
               height: '32px',
@@ -414,7 +430,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             }}>
               {userName.substring(0, 2).toUpperCase()}
             </div>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {userName}
@@ -437,7 +453,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 {userEmail}
               </div>
             </div>
-          </div>
+          </Link>
 
           <button
             onClick={handleLogout}
