@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, forbiddenResponse, hasPermission } from '@/lib/auth';
 import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
+import { PATCH as patchSocialAccounts } from '@/app/api/social-accounts/route';
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const forwardReq = new NextRequest(req.url, {
+      method: 'PATCH',
+      headers: req.headers,
+      body: JSON.stringify({ ...body, id }),
+    });
+    return patchSocialAccounts(forwardReq);
+  } catch (err) {
+    return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
+  }
+}
 
 export async function DELETE(
   req: NextRequest,
@@ -36,3 +55,4 @@ export async function DELETE(
 
   return NextResponse.json({ success: true, message: 'Account disconnected successfully' });
 }
+

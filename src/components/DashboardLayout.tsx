@@ -709,9 +709,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
 
                         {bskyAccount ? (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '3px 8px', borderRadius: '6px' }}>
-                            <Check size={12} /> CONNECTED
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '3px 8px', borderRadius: '6px' }}>
+                              <Check size={12} /> CONNECTED
+                            </span>
+                            <Link
+                              href="/social-accounts"
+                              onClick={() => setShowOnboarding(false)}
+                              style={{ fontSize: '0.74rem', fontWeight: 700, color: '#2563eb', textDecoration: 'none' }}
+                            >
+                              Edit / Disconnect →
+                            </Link>
+                          </div>
                         ) : !showBskyForm ? (
                           <button
                             type="button"
@@ -793,9 +802,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
 
                         {xAccount ? (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '3px 8px', borderRadius: '6px' }}>
-                            <Check size={12} /> CONNECTED
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '3px 8px', borderRadius: '6px' }}>
+                              <Check size={12} /> CONNECTED
+                            </span>
+                            <Link
+                              href="/social-accounts"
+                              onClick={() => setShowOnboarding(false)}
+                              style={{ fontSize: '0.74rem', fontWeight: 700, color: '#2563eb', textDecoration: 'none' }}
+                            >
+                              Edit / Disconnect →
+                            </Link>
+                          </div>
                         ) : !showXForm ? (
                           <button
                             type="button"

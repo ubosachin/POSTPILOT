@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
 import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
-import { encryptCredentials } from '@/lib/crypto';
+import { encryptCredentials, decryptCredentials } from '@/lib/crypto';
 import { SocialAccount } from '@/types';
 
 export async function GET(req: NextRequest) {
@@ -129,35 +129,168 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = getAuthSession(req);
+    if (!session) return unauthorizedResponse();
+
+    if (!hasPermission(session.role, 'canManageSocialAccounts')) {
+      return forbiddenResponse('Forbidden: Only Workspace Owners and Admins have permission to edit social accounts.');
+    }
+
+    await connectToDatabase();
+
+    const workspaceId = session.workspaceId;
+    const body = await req.json();
+    const { id, displayName, accountId, credentials } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Social account ID is required' }, { status: 400 });
+    }
+
+    const account = memoryStore.socialAccounts.get(id);
+    if (!account || account.workspaceId !== workspaceId) {
+      return NextResponse.json({ success: false, error: 'Social account not found' }, { status: 404 });
+    }
+
+    // If handle/accountId is modified, validate and check for collisions
+    if (accountId && typeof accountId === 'string') {
+      const cleanAccountId = accountId.trim().replace(/^@/, '');
+      if (cleanAccountId.length === 0) {
+        return NextResponse.json({ success: false, error: 'Account handle cannot be empty' }, { status: 400 });
+      }
+
+      // Check collision with another account in the same workspace
+      const duplicate = Array.from(memoryStore.socialAccounts.values()).find(
+        (a) => a.id !== id && a.workspaceId === workspaceId && a.platform === account.platform && a.accountId.toLowerCase() === cleanAccountId.toLowerCase()
+      );
+      if (duplicate) {
+        return NextResponse.json(
+          { success: false, error: `An account for @${cleanAccountId} (${account.platform.toUpperCase()}) is already connected.` },
+          { status: 409 }
+        );
+      }
+
+      account.accountId = cleanAccountId;
+    }
+
+    if (displayName && typeof displayName === 'string') {
+      account.displayName = displayName.trim();
+    }
+
+    // Update credentials if provided
+    if (credentials && typeof credentials === 'object') {
+      let existingCreds: Record<string, any> = {};
+      if (account.encryptedCredentials) {
+        try {
+          existingCreds = decryptCredentials(account.encryptedCredentials);
+        } catch {
+          existingCreds = {};
+        }
+      }
+
+      if (account.platform === 'bluesky') {
+        const mergedCreds = {
+          ...existingCreds,
+          identifier: account.accountId,
+          ...(credentials.password ? { password: credentials.password } : {}),
+          ...(credentials.service ? { service: credentials.service } : {}),
+        };
+        if (!mergedCreds.service) {
+          mergedCreds.service = process.env.BLUESKY_SERVICE_URL || 'https://bsky.social';
+        }
+        account.encryptedCredentials = encryptCredentials(mergedCreds);
+        account.status = 'active';
+        account.errorMessage = undefined;
+        account.lastVerifiedAt = new Date();
+      } else if (account.platform === 'x') {
+        const mergedCreds = {
+          ...existingCreds,
+          ...(credentials.apiKey ? { apiKey: credentials.apiKey } : {}),
+          ...(credentials.apiSecret ? { apiSecret: credentials.apiSecret } : {}),
+          ...(credentials.accessToken ? { accessToken: credentials.accessToken } : {}),
+          ...(credentials.accessTokenSecret ? { accessTokenSecret: credentials.accessTokenSecret } : {}),
+        };
+        account.encryptedCredentials = encryptCredentials(mergedCreds);
+        account.status = 'active';
+        account.errorMessage = undefined;
+        account.lastVerifiedAt = new Date();
+      }
+    } else if (accountId && account.platform === 'bluesky') {
+      // If handle changed but no new password was submitted, update identifier in existing encrypted credentials
+      try {
+        const existingCreds = decryptCredentials<Record<string, any>>(account.encryptedCredentials);
+        existingCreds.identifier = account.accountId;
+        account.encryptedCredentials = encryptCredentials(existingCreds);
+      } catch {
+        // ignore
+      }
+    }
+
+    // Persist to MongoDB Atlas
+    await persistenceBridge.persistSocialAccount(account);
+
+    memoryStore.addAuditLog({
+      workspaceId,
+      actorId: session.userId || 'usr_pilot_01',
+      actorName: session.name || 'Alex Rivera',
+      action: 'SOCIAL_ACCOUNT_UPDATED',
+      resourceId: account.id,
+      resourceType: 'socialAccount',
+      details: { platform: account.platform, accountId: account.accountId, displayName: account.displayName },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { encryptedCredentials, ...safeAccount } = account;
+    return NextResponse.json({
+      success: true,
+      account: safeAccount,
+      message: 'Account updated successfully',
+    });
+  } catch (err) {
+    return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
-  const session = getAuthSession(req);
-  const workspaceId = session ? session.workspaceId : 'ws_postpilot_main';
-  const url = new URL(req.url);
-  const accountId = url.searchParams.get('id');
+  try {
+    const session = getAuthSession(req);
+    if (!session) return unauthorizedResponse();
 
-  if (!accountId) {
-    return NextResponse.json({ success: false, error: 'Account ID required' }, { status: 400 });
+    if (!hasPermission(session.role, 'canManageSocialAccounts')) {
+      return forbiddenResponse('Forbidden: Only Workspace Owners and Admins have permission to disconnect social accounts.');
+    }
+
+    const workspaceId = session.workspaceId;
+    const url = new URL(req.url);
+    const accountId = url.searchParams.get('id');
+
+    if (!accountId) {
+      return NextResponse.json({ success: false, error: 'Account ID required' }, { status: 400 });
+    }
+
+    await connectToDatabase();
+
+    const account = memoryStore.socialAccounts.get(accountId);
+    if (!account || account.workspaceId !== workspaceId) {
+      return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
+    }
+
+    memoryStore.socialAccounts.delete(accountId);
+    await persistenceBridge.deleteSocialAccount(accountId, workspaceId);
+
+    memoryStore.addAuditLog({
+      workspaceId,
+      actorId: session.userId || 'usr_pilot_01',
+      actorName: session.name || 'Alex Rivera',
+      action: 'SOCIAL_ACCOUNT_DISCONNECTED',
+      resourceId: accountId,
+      resourceType: 'socialAccount',
+      details: { platform: account.platform, accountId: account.accountId },
+    });
+
+    return NextResponse.json({ success: true, message: 'Account disconnected successfully' });
+  } catch (err) {
+    return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
   }
-
-  await connectToDatabase();
-
-  const account = memoryStore.socialAccounts.get(accountId);
-  if (!account || account.workspaceId !== workspaceId) {
-    return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
-  }
-
-  memoryStore.socialAccounts.delete(accountId);
-  await persistenceBridge.deleteSocialAccount(accountId, workspaceId);
-
-  memoryStore.addAuditLog({
-    workspaceId,
-    actorId: session?.userId || 'usr_pilot_01',
-    actorName: session?.name || 'Alex Rivera',
-    action: 'SOCIAL_ACCOUNT_DISCONNECTED',
-    resourceId: accountId,
-    resourceType: 'socialAccount',
-    details: { platform: account.platform, accountId: account.accountId },
-  });
-
-  return NextResponse.json({ success: true, message: 'Account disconnected successfully' });
 }

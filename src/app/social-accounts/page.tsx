@@ -11,7 +11,9 @@ import {
   ShieldCheck, 
   Plus, 
   Lock,
-  ExternalLink
+  Edit3,
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { SocialAccount } from '@/types';
 
@@ -35,6 +37,31 @@ export default function SocialAccountsPage() {
   const [xApiSecret, setXApiSecret] = useState('');
   const [xAccessToken, setXAccessToken] = useState('');
   const [xAccessSecret, setXAccessSecret] = useState('');
+
+  // Edit Account Modal State
+  const [editingAccount, setEditingAccount] = useState<SocialAccount | null>(null);
+  const [editDisplayName, setEditDisplayName] = useState('');
+  const [editAccountId, setEditAccountId] = useState('');
+  const [editBskyPassword, setEditBskyPassword] = useState('');
+  const [editBskyService, setEditBskyService] = useState('https://bsky.social');
+  const [editXApiKey, setEditXApiKey] = useState('');
+  const [editXApiSecret, setEditXApiSecret] = useState('');
+  const [editXAccessToken, setEditXAccessToken] = useState('');
+  const [editXAccessSecret, setEditXAccessSecret] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  // Delete Confirmation Modal State
+  const [deletingAccount, setDeletingAccount] = useState<SocialAccount | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast Notification State
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   const fetchAccounts = async () => {
     setIsLoading(true);
@@ -88,13 +115,86 @@ export default function SocialAccountsPage() {
     }
   };
 
-  const handleDisconnect = async (id: string) => {
-    if (!confirm('Disconnect this social account? Scheduled jobs for it will be paused.')) return;
+  const openEditModal = (acc: SocialAccount) => {
+    setEditingAccount(acc);
+    setEditDisplayName(acc.displayName || '');
+    setEditAccountId(acc.accountId || '');
+    setEditBskyPassword('');
+    setEditBskyService('https://bsky.social');
+    setEditXApiKey('');
+    setEditXApiSecret('');
+    setEditXAccessToken('');
+    setEditXAccessSecret('');
+    setEditError(null);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccount) return;
+    setIsEditing(true);
+    setEditError(null);
+
     try {
-      await fetch(`/api/social-accounts?id=${id}`, { method: 'DELETE' });
-      fetchAccounts();
-    } catch (e) {
-      console.error(e);
+      const credentials: Record<string, string> = {};
+      if (editingAccount.platform === 'bluesky') {
+        if (editBskyPassword) {
+          credentials.password = editBskyPassword;
+          credentials.service = editBskyService || 'https://bsky.social';
+          credentials.identifier = editAccountId.replace(/^@/, '');
+        }
+      } else if (editingAccount.platform === 'x') {
+        if (editXApiKey) credentials.apiKey = editXApiKey;
+        if (editXApiSecret) credentials.apiSecret = editXApiSecret;
+        if (editXAccessToken) credentials.accessToken = editXAccessToken;
+        if (editXAccessSecret) credentials.accessTokenSecret = editXAccessSecret;
+      }
+
+      const res = await fetch('/api/social-accounts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingAccount.id,
+          displayName: editDisplayName,
+          accountId: editAccountId,
+          credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEditingAccount(null);
+        showToast('Social account updated successfully!');
+        fetchAccounts();
+      } else {
+        setEditError(data.error || 'Failed to update account');
+      }
+    } catch (err) {
+      setEditError((err as Error).message);
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!deletingAccount) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/social-accounts?id=${deletingAccount.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`Disconnected @${deletingAccount.accountId}`);
+        setAccounts((prev) => prev.filter((a) => a.id !== deletingAccount.id));
+        setDeletingAccount(null);
+        if (editingAccount?.id === deletingAccount.id) {
+          setEditingAccount(null);
+        }
+      } else {
+        showToast(data.error || 'Failed to disconnect account', 'error');
+      }
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -121,6 +221,7 @@ export default function SocialAccountsPage() {
         setShowBskyModal(false);
         setBskyHandle('');
         setBskyPassword('');
+        showToast('Connected Bluesky account successfully!');
         fetchAccounts();
       } else {
         const d = await res.json();
@@ -160,6 +261,7 @@ export default function SocialAccountsPage() {
         setXApiSecret('');
         setXAccessToken('');
         setXAccessSecret('');
+        showToast('Connected X account successfully!');
         fetchAccounts();
       } else {
         const d = await res.json();
@@ -180,7 +282,7 @@ export default function SocialAccountsPage() {
             Connected Social Accounts
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.94rem', marginTop: '4px' }}>
-            Manage authorized credentials for Bluesky and X with AES-256-GCM encryption at rest.
+            Manage authorized credentials for Bluesky and X with AES-256-GCM encryption at rest. Edit details or disconnect anytime.
           </p>
         </div>
 
@@ -209,7 +311,7 @@ export default function SocialAccountsPage() {
             fontWeight: 600
           }}>
             <Lock size={14} color="#d97706" />
-            <span>Connect Accounts (Owner/Admin Only)</span>
+            <span>Manage Accounts (Owner/Admin Only)</span>
           </div>
         )}
       </div>
@@ -227,7 +329,7 @@ export default function SocialAccountsPage() {
       }}>
         <Lock size={18} color="#4f46e5" />
         <div style={{ fontSize: '0.84rem', color: '#4338ca' }}>
-          <strong style={{ color: '#1e1b4b' }}>Credential Security:</strong> App passwords and API tokens are encrypted with military-grade AES-256-GCM authenticated cipher. Plaintext credentials are never exposed in logs or sent to the browser.
+          <strong style={{ color: '#1e1b4b' }}>Credential Security:</strong> App passwords and API tokens are encrypted with AES-256-GCM authenticated cipher. You can edit handle labels or update credentials without deleting the account.
         </div>
       </div>
 
@@ -249,120 +351,502 @@ export default function SocialAccountsPage() {
             const isTestThis = testResult && testResult.id === acc.id;
 
             return (
-              <div key={acc.id} className="glass-panel" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '10px',
-                      background: acc.platform === 'bluesky' 
-                        ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' 
-                        : '#0f172a',
-                      border: acc.platform === 'x' ? '1px solid #334155' : 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      color: '#ffffff',
-                      fontSize: '1.1rem'
-                    }}>
-                      {acc.platform === 'bluesky' ? '🦋' : '𝕏'}
-                    </div>
+              <div key={acc.id} className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '10px',
+                        background: acc.platform === 'bluesky' 
+                          ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' 
+                          : '#0f172a',
+                        border: acc.platform === 'x' ? '1px solid #334155' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        fontSize: '1.1rem'
+                      }}>
+                        {acc.platform === 'bluesky' ? '🦋' : '𝕏'}
+                      </div>
 
-                    <div>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
-                        {acc.displayName}
-                      </h3>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>
-                        @{acc.accountId} • {acc.platform === 'bluesky' ? 'AT Protocol' : 'v2 API'}
+                      <div>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                          {acc.displayName}
+                        </h3>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>
+                          @{acc.accountId} • {acc.platform === 'bluesky' ? 'AT Protocol' : 'v2 API'}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <span className={`badge ${acc.status === 'active' ? 'badge-success' : 'badge-danger'}`}>
-                    {acc.status.toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Account Details & Status */}
-                <div style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '12px 14px',
-                  marginBottom: '16px',
-                  fontSize: '0.8rem',
-                  color: '#475569'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: 600 }}>Credential Health:</span>
-                    <span style={{ color: '#047857', fontWeight: 700 }}>Encrypted & Verified</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 600 }}>Last Verified:</span>
-                    <span style={{ color: '#0f172a', fontWeight: 600 }}>
-                      {acc.lastVerifiedAt ? new Date(acc.lastVerifiedAt).toLocaleString() : 'Recently'}
+                    <span className={`badge ${acc.status === 'active' ? 'badge-success' : 'badge-danger'}`}>
+                      {acc.status.toUpperCase()}
                     </span>
                   </div>
+
+                  {/* Account Details & Status */}
+                  <div style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '12px 14px',
+                    marginBottom: '16px',
+                    fontSize: '0.8rem',
+                    color: '#475569'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 600 }}>Credential Health:</span>
+                      <span style={{ color: '#047857', fontWeight: 700 }}>Encrypted & Verified</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontWeight: 600 }}>Last Verified:</span>
+                      <span style={{ color: '#0f172a', fontWeight: 600 }}>
+                        {acc.lastVerifiedAt ? new Date(acc.lastVerifiedAt).toLocaleString() : 'Recently'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Inline Test Result Message */}
+                  {isTestThis && (
+                    <div style={{
+                      marginBottom: '16px',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      background: testResult.success ? '#ecfdf5' : '#fef2f2',
+                      color: testResult.success ? '#047857' : '#b91c1c',
+                      border: `1px solid ${testResult.success ? '#a7f3d0' : '#fecaca'}`
+                    }}>
+                      {testResult.message}
+                    </div>
+                  )}
                 </div>
 
-                {/* Inline Test Result Message */}
-                {isTestThis && (
-                  <div style={{
-                    marginBottom: '16px',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    background: testResult.success ? '#ecfdf5' : '#fef2f2',
-                    color: testResult.success ? '#047857' : '#b91c1c',
-                    border: `1px solid ${testResult.success ? '#a7f3d0' : '#fecaca'}`
-                  }}>
-                    {testResult.message}
-                  </div>
-                )}
-
-                {/* Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* Controls Bar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
                   <button
                     onClick={() => handleTestConnection(acc.id)}
                     disabled={testingId === acc.id}
                     className="btn-secondary"
-                    style={{ padding: '7px 12px', fontSize: '0.82rem' }}
+                    style={{ padding: '6px 10px', fontSize: '0.8rem' }}
                   >
                     {testingId === acc.id ? (
                       <RefreshCw size={12} style={{ animation: 'spin 1s linear infinite' }} />
                     ) : (
-                      <ShieldCheck size={14} color="#059669" />
+                      <ShieldCheck size={13} color="#059669" />
                     )}
-                    <span>Test Connection</span>
+                    <span>Test</span>
                   </button>
 
                   {(userRole === 'owner' || userRole === 'admin') && (
-                    <button
-                      onClick={() => handleDisconnect(acc.id)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#dc2626',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: '6px'
-                      }}
-                    >
-                      <Trash2 size={13} />
-                      <span>Disconnect</span>
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        onClick={() => openEditModal(acc)}
+                        className="btn-secondary"
+                        style={{ padding: '6px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Edit3 size={13} color="#4f46e5" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        onClick={() => setDeletingAccount(acc)}
+                        style={{
+                          background: '#fff1f2',
+                          border: '1px solid #fecdd3',
+                          color: '#e11d48',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 10px',
+                          borderRadius: 'var(--radius-sm)'
+                        }}
+                        title="Disconnect / Delete this account"
+                      >
+                        <Trash2 size={13} />
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Edit Account Modal */}
+      {editingAccount && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.45)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 210,
+          padding: '20px'
+        }}>
+          <div className="glass-panel" style={{
+            width: '100%',
+            maxWidth: '520px',
+            padding: '28px',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: editingAccount.platform === 'bluesky' 
+                    ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' 
+                    : '#0f172a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '1rem'
+                }}>
+                  {editingAccount.platform === 'bluesky' ? '🦋' : '𝕏'}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Edit {editingAccount.platform === 'bluesky' ? 'Bluesky' : 'X'} Account
+                  </h3>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    ID: {editingAccount.id}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setEditingAccount(null)}
+                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {editError && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#991b1b',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                fontSize: '0.84rem',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <AlertCircle size={16} color="#dc2626" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEdit}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', color: '#334155', fontWeight: 700, marginBottom: '5px' }}>
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={editDisplayName}
+                  onChange={(e) => setEditDisplayName(e.target.value)}
+                  placeholder="e.g. Official Tech Handle"
+                  className="input-field"
+                  required
+                />
+                <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>
+                  Friendly label displayed across AI Studio, Scheduler, and Post cards.
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', color: '#334155', fontWeight: 700, marginBottom: '5px' }}>
+                  Account Handle / Username
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontWeight: 700 }}>@</span>
+                  <input
+                    type="text"
+                    value={editAccountId}
+                    onChange={(e) => setEditAccountId(e.target.value)}
+                    placeholder="username"
+                    className="input-field"
+                    style={{ paddingLeft: '28px' }}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Credentials Update Section */}
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: 'var(--radius-md)',
+                padding: '14px 16px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                  <Lock size={14} color="#4f46e5" />
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>
+                    Update Sensitive Credentials
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: 'auto' }}>
+                    Optional
+                  </span>
+                </div>
+
+                {editingAccount.platform === 'bluesky' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
+                        New App Password
+                      </label>
+                      <input
+                        type="password"
+                        value={editBskyPassword}
+                        onChange={(e) => setEditBskyPassword(e.target.value)}
+                        placeholder="Leave blank to keep existing password"
+                        className="input-field"
+                        style={{ fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
+                        AT Protocol Service URL
+                      </label>
+                      <input
+                        type="text"
+                        value={editBskyService}
+                        onChange={(e) => setEditBskyService(e.target.value)}
+                        placeholder="https://bsky.social"
+                        className="input-field"
+                        style={{ fontSize: '0.82rem' }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
+                          API Key
+                        </label>
+                        <input
+                          type="password"
+                          value={editXApiKey}
+                          onChange={(e) => setEditXApiKey(e.target.value)}
+                          placeholder="Leave blank to keep"
+                          className="input-field"
+                          style={{ fontSize: '0.8rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
+                          API Secret
+                        </label>
+                        <input
+                          type="password"
+                          value={editXApiSecret}
+                          onChange={(e) => setEditXApiSecret(e.target.value)}
+                          placeholder="Leave blank to keep"
+                          className="input-field"
+                          style={{ fontSize: '0.8rem' }}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
+                          Access Token
+                        </label>
+                        <input
+                          type="password"
+                          value={editXAccessToken}
+                          onChange={(e) => setEditXAccessToken(e.target.value)}
+                          placeholder="Leave blank to keep"
+                          className="input-field"
+                          style={{ fontSize: '0.8rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
+                          Token Secret
+                        </label>
+                        <input
+                          type="password"
+                          value={editXAccessSecret}
+                          onChange={(e) => setEditXAccessSecret(e.target.value)}
+                          placeholder="Leave blank to keep"
+                          className="input-field"
+                          style={{ fontSize: '0.8rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeletingAccount(editingAccount);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#dc2626',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 8px'
+                  }}
+                >
+                  <Trash2 size={14} />
+                  <span>Delete Account</span>
+                </button>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingAccount(null)}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isEditing}
+                    className="btn-primary"
+                    style={{ minWidth: '120px' }}
+                  >
+                    {isEditing ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingAccount && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.45)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 220,
+          padding: '20px'
+        }}>
+          <div className="glass-panel" style={{
+            width: '100%',
+            maxWidth: '430px',
+            padding: '26px',
+            background: '#ffffff',
+            border: '1px solid #fee2e2',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 20px 40px -15px rgba(220, 38, 38, 0.15)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: '#fee2e2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#dc2626'
+              }}>
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Disconnect Account?
+                </h3>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  @{deletingAccount.accountId} ({deletingAccount.platform.toUpperCase()})
+                </div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '20px', lineHeight: '1.5' }}>
+              Are you sure you want to disconnect this account? Any scheduled posts targeted to <strong>@{deletingAccount.accountId}</strong> will be paused until an account is reconnected.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setDeletingAccount(null)}
+                disabled={isDeleting}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteAccount}
+                disabled={isDeleting}
+                style={{
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {isDeleting ? (
+                  <>
+                    <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    <span>Disconnecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} />
+                    <span>Disconnect Account</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -554,6 +1038,29 @@ export default function SocialAccountsPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Message */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 9999,
+          background: toastMessage.type === 'success' ? '#065f46' : '#991b1b',
+          color: '#ffffff',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)',
+          fontSize: '0.88rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          {toastMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+          <span>{toastMessage.text}</span>
         </div>
       )}
     </DashboardLayout>

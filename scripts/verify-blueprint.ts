@@ -202,6 +202,17 @@ async function runMasterVerification() {
     createdAt: new Date(),
   });
 
+  // Verify Social Account Edit
+  const accountToEdit = memoryStore.socialAccounts.get(testSocId)!;
+  accountToEdit.displayName = 'Updated Tenant A Bluesky Display';
+  accountToEdit.accountId = 'tenantA_renamed.bsky.social';
+  const updatedSecretCreds = { identifier: 'tenantA_renamed.bsky.social', password: 'new_app_password_999' };
+  accountToEdit.encryptedCredentials = encryptCredentials(updatedSecretCreds);
+  assert('Social account display name and handle can be updated', accountToEdit.displayName === 'Updated Tenant A Bluesky Display' && accountToEdit.accountId === 'tenantA_renamed.bsky.social');
+  const decryptedUpdated = decryptCredentials<typeof updatedSecretCreds>(accountToEdit.encryptedCredentials);
+  assert('Rotated encrypted credentials match updated password', decryptedUpdated.password === 'new_app_password_999');
+
+  // Verify Social Account Disconnect/Delete
   memoryStore.socialAccounts.delete(testSocId);
   assert('Social account disconnection safely removes account', !memoryStore.socialAccounts.has(testSocId));
 
