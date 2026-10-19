@@ -37,14 +37,37 @@ export async function POST(req: NextRequest) {
     const workspaceId = session.workspaceId;
     const body = await req.json();
 
-    const { platform, accountId, displayName, credentials } = body;
+    const { platform, accountId, displayName } = body;
+    let credentials = body.credentials || {};
 
-    if (!platform || !accountId || !credentials) {
-      return NextResponse.json({ success: false, error: 'Platform, accountId and credentials are required' }, { status: 400 });
+    if (!platform || !accountId) {
+      return NextResponse.json({ success: false, error: 'Platform and accountId are required' }, { status: 400 });
     }
 
     if (platform !== 'bluesky' && platform !== 'x') {
       return NextResponse.json({ success: false, error: 'Platform must be either bluesky or x' }, { status: 400 });
+    }
+
+    // Auto-fill X credentials from server environment if not provided
+    if (platform === 'x') {
+      if (!credentials.apiKey && process.env.X_API_KEY) credentials.apiKey = process.env.X_API_KEY;
+      if (!credentials.apiSecret && process.env.X_API_SECRET) credentials.apiSecret = process.env.X_API_SECRET;
+      if (!credentials.accessToken && process.env.X_ACCESS_TOKEN) credentials.accessToken = process.env.X_ACCESS_TOKEN;
+      if (!credentials.accessTokenSecret && process.env.X_ACCESS_TOKEN_SECRET) credentials.accessTokenSecret = process.env.X_ACCESS_TOKEN_SECRET;
+
+      if (!credentials.apiKey) {
+        return NextResponse.json({ success: false, error: 'X API Key and Secret are required' }, { status: 400 });
+      }
+    } else if (platform === 'bluesky') {
+      if (!credentials.password) {
+        return NextResponse.json({ success: false, error: 'Bluesky app password is required' }, { status: 400 });
+      }
+      if (!credentials.identifier) {
+        credentials.identifier = accountId;
+      }
+      if (!credentials.service) {
+        credentials.service = process.env.BLUESKY_SERVICE_URL || 'https://bsky.social';
+      }
     }
 
     // Check unique constraint per workspace
@@ -77,6 +100,10 @@ export async function POST(req: NextRequest) {
       };
       memoryStore.socialAccounts.set(account.id, account);
     }
+
+    // Persist to MongoDB Atlas asynchronously
+    const { persistenceBridge } = await import('@/lib/db/persistence');
+    persistenceBridge.persistSocialAccount(account).catch(() => {});
 
     memoryStore.addAuditLog({
       workspaceId,

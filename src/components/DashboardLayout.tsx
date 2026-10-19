@@ -24,7 +24,11 @@ import {
   Compass,
   Lock,
   ShieldAlert,
-  User
+  User,
+  ExternalLink,
+  Plus,
+  AlertCircle,
+  Check
 } from 'lucide-react';
 import PostPilotLogo from '@/components/PostPilotLogo';
 import { UserRole } from '@/types';
@@ -49,9 +53,118 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Onboarding wizard modal state
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(1);
+  const [socialAccounts, setSocialAccounts] = useState<any[]>([]);
+  const [showBskyForm, setShowBskyForm] = useState(false);
+  const [showXForm, setShowXForm] = useState(false);
+  const [onboardingBskyHandle, setOnboardingBskyHandle] = useState('');
+  const [onboardingBskyPassword, setOnboardingBskyPassword] = useState('');
+  const [onboardingXHandle, setOnboardingXHandle] = useState('');
+  const [onboardingXApiKey, setOnboardingXApiKey] = useState('');
+  const [onboardingXApiSecret, setOnboardingXApiSecret] = useState('');
+  const [onboardingXAccessToken, setOnboardingXAccessToken] = useState('');
+  const [onboardingXAccessSecret, setOnboardingXAccessSecret] = useState('');
+  const [connectingSocial, setConnectingSocial] = useState(false);
+  const [socialConnectError, setSocialConnectError] = useState<string | null>(null);
+  const [socialConnectSuccess, setSocialConnectSuccess] = useState<string | null>(null);
+
+  const fetchSocialAccounts = async () => {
+    try {
+      const res = await fetch('/api/social-accounts');
+      const data = await res.json();
+      if (data.accounts) {
+        setSocialAccounts(data.accounts);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleConnectBsky = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onboardingBskyHandle || !onboardingBskyPassword) return;
+    setConnectingSocial(true);
+    setSocialConnectError(null);
+    setSocialConnectSuccess(null);
+    try {
+      const res = await fetch('/api/social-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: 'bluesky',
+          accountId: onboardingBskyHandle,
+          displayName: `Bluesky (@${onboardingBskyHandle.replace('@', '')})`,
+          credentials: {
+            identifier: onboardingBskyHandle,
+            password: onboardingBskyPassword,
+            service: 'https://bsky.social',
+          },
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSocialConnectSuccess('Bluesky connected successfully!');
+        setShowBskyForm(false);
+        setOnboardingBskyHandle('');
+        setOnboardingBskyPassword('');
+        fetchSocialAccounts();
+        setTimeout(() => setSocialConnectSuccess(null), 3000);
+      } else {
+        setSocialConnectError(data.error || 'Failed to connect Bluesky');
+      }
+    } catch (err) {
+      setSocialConnectError((err as Error).message);
+    } finally {
+      setConnectingSocial(false);
+    }
+  };
+
+  const handleConnectX = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onboardingXHandle) return;
+    setConnectingSocial(true);
+    setSocialConnectError(null);
+    setSocialConnectSuccess(null);
+    try {
+      const creds: any = {};
+      if (onboardingXApiKey) creds.apiKey = onboardingXApiKey;
+      if (onboardingXApiSecret) creds.apiSecret = onboardingXApiSecret;
+      if (onboardingXAccessToken) creds.accessToken = onboardingXAccessToken;
+      if (onboardingXAccessSecret) creds.accessTokenSecret = onboardingXAccessSecret;
+
+      const res = await fetch('/api/social-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: 'x',
+          accountId: onboardingXHandle,
+          displayName: `X (@${onboardingXHandle.replace('@', '')})`,
+          credentials: creds,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSocialConnectSuccess('X (Twitter) connected successfully!');
+        setShowXForm(false);
+        setOnboardingXHandle('');
+        setOnboardingXApiKey('');
+        setOnboardingXApiSecret('');
+        setOnboardingXAccessToken('');
+        setOnboardingXAccessSecret('');
+        fetchSocialAccounts();
+        setTimeout(() => setSocialConnectSuccess(null), 3000);
+      } else {
+        setSocialConnectError(data.error || 'Failed to connect X');
+      }
+    } catch (err) {
+      setSocialConnectError((err as Error).message);
+    } finally {
+      setConnectingSocial(false);
+    }
+  };
 
   // Check query params for onboarding trigger and role errors
   useEffect(() => {
+    fetchSocialAccounts();
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('onboarding') === 'true') {
@@ -551,42 +664,249 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
 
             {/* Step 1: Connect Social Accounts */}
-            {onboardingStep === 1 && (
-              <div>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
-                  1. Connect Your Social Accounts
-                </h2>
-                <p style={{ fontSize: '0.88rem', color: '#475569', marginBottom: '20px', lineHeight: '1.5' }}>
-                  PostPilot connects securely to <strong>Bluesky (AT Protocol)</strong> and <strong>X (Twitter API v2)</strong>. All credentials are encrypted at rest with AES-256-GCM.
-                </p>
+            {onboardingStep === 1 && (() => {
+              const bskyAccount = socialAccounts.find((a) => a.platform === 'bluesky');
+              const xAccount = socialAccounts.find((a) => a.platform === 'x');
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-                  <div style={{ padding: '14px', borderRadius: 'var(--radius-md)', background: '#eff6ff', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e40af' }}>Bluesky AT Protocol</div>
-                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>Connect using your handle and app-password</div>
+              return (
+                <div>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+                    1. Connect Your Social Accounts
+                  </h2>
+                  <p style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '18px', lineHeight: '1.5' }}>
+                    Connect your <strong>Bluesky</strong> and <strong>X (Twitter)</strong> accounts to enable instant AI publishing and automated queue dispatch.
+                  </p>
+
+                  {socialConnectSuccess && (
+                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', padding: '10px 14px', borderRadius: '8px', fontSize: '0.84rem', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={16} color="#059669" />
+                      <span>{socialConnectSuccess}</span>
                     </div>
-                    <span className="badge badge-success">READY</span>
+                  )}
+
+                  {socialConnectError && (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '10px 14px', borderRadius: '8px', fontSize: '0.84rem', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={16} color="#dc2626" />
+                      <span>{socialConnectError}</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+                    
+                    {/* Bluesky Card */}
+                    <div style={{ padding: '16px', borderRadius: 'var(--radius-md)', background: bskyAccount ? '#f0fdf4' : '#eff6ff', border: `1px solid ${bskyAccount ? '#bbf7d0' : '#bfdbfe'}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '1.3rem' }}>🦋</span>
+                          <div>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: bskyAccount ? '#166534' : '#1e40af' }}>
+                              Bluesky AT Protocol
+                            </div>
+                            <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                              {bskyAccount ? `Connected as @${bskyAccount.accountId}` : 'Connect using your handle and app-password'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {bskyAccount ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '3px 8px', borderRadius: '6px' }}>
+                            <Check size={12} /> CONNECTED
+                          </span>
+                        ) : !showBskyForm ? (
+                          <button
+                            type="button"
+                            onClick={() => { setShowBskyForm(true); setShowXForm(false); }}
+                            style={{ background: '#2563eb', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            <Plus size={13} /> Connect
+                          </button>
+                        ) : null}
+                      </div>
+
+                      {/* Expandable Bluesky Form */}
+                      {!bskyAccount && showBskyForm && (
+                        <form onSubmit={handleConnectBsky} style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #dbeafe', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#1e3a8a', marginBottom: '3px' }}>
+                              Bluesky Handle
+                            </label>
+                            <input
+                              type="text"
+                              value={onboardingBskyHandle}
+                              onChange={(e) => setOnboardingBskyHandle(e.target.value)}
+                              placeholder="e.g. handle.bsky.social"
+                              required
+                              style={{ width: '100%', padding: '7px 10px', fontSize: '0.82rem', border: '1px solid #bfdbfe', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#1e3a8a', marginBottom: '3px' }}>
+                              App Password
+                            </label>
+                            <input
+                              type="password"
+                              value={onboardingBskyPassword}
+                              onChange={(e) => setOnboardingBskyPassword(e.target.value)}
+                              placeholder="xxxx-xxxx-xxxx-xxxx"
+                              required
+                              style={{ width: '100%', padding: '7px 10px', fontSize: '0.82rem', border: '1px solid #bfdbfe', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
+                            />
+                            <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                              Generate in Bluesky Settings → Privacy and Security → App Passwords
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setShowBskyForm(false)}
+                              style={{ background: 'none', border: '1px solid #cbd5e1', color: '#64748b', padding: '5px 10px', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={connectingSocial}
+                              style={{ background: '#2563eb', color: '#ffffff', border: 'none', padding: '5px 14px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              {connectingSocial ? 'Connecting...' : 'Save & Link'}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+
+                    {/* X (Twitter) Card */}
+                    <div style={{ padding: '16px', borderRadius: 'var(--radius-md)', background: xAccount ? '#f0fdf4' : '#f8fafc', border: `1px solid ${xAccount ? '#bbf7d0' : '#e2e8f0'}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '1.2rem', fontWeight: 900 }}>𝕏</span>
+                          <div>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
+                              X (Twitter) API v2
+                            </div>
+                            <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                              {xAccount ? `Connected as @${xAccount.accountId}` : 'Connect with your X handle & API credentials'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {xAccount ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 800, background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '3px 8px', borderRadius: '6px' }}>
+                            <Check size={12} /> CONNECTED
+                          </span>
+                        ) : !showXForm ? (
+                          <button
+                            type="button"
+                            onClick={() => { setShowXForm(true); setShowBskyForm(false); }}
+                            style={{ background: '#0f172a', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            <Plus size={13} /> Connect
+                          </button>
+                        ) : null}
+                      </div>
+
+                      {/* Expandable X Form */}
+                      {!xAccount && showXForm && (
+                        <form onSubmit={handleConnectX} style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                              X Handle
+                            </label>
+                            <input
+                              type="text"
+                              value={onboardingXHandle}
+                              onChange={(e) => setOnboardingXHandle(e.target.value)}
+                              placeholder="e.g. MyBrandApp"
+                              required
+                              style={{ width: '100%', padding: '7px 10px', fontSize: '0.82rem', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
+                            />
+                            <span style={{ fontSize: '0.7rem', color: '#059669', marginTop: '2px', display: 'block' }}>
+                              ✓ App environment keys will automatically authenticate if left empty.
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: '2px' }}>
+                                API Key (Optional)
+                              </label>
+                              <input
+                                type="password"
+                                value={onboardingXApiKey}
+                                onChange={(e) => setOnboardingXApiKey(e.target.value)}
+                                placeholder="From .env / custom"
+                                style={{ width: '100%', padding: '6px 8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: '2px' }}>
+                                API Secret (Optional)
+                              </label>
+                              <input
+                                type="password"
+                                value={onboardingXApiSecret}
+                                onChange={(e) => setOnboardingXApiSecret(e.target.value)}
+                                placeholder="From .env / custom"
+                                style={{ width: '100%', padding: '6px 8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setShowXForm(false)}
+                              style={{ background: 'none', border: '1px solid #cbd5e1', color: '#64748b', padding: '5px 10px', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={connectingSocial}
+                              style={{ background: '#0f172a', color: '#ffffff', border: 'none', padding: '5px 14px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              {connectingSocial ? 'Connecting...' : 'Save & Link'}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+
                   </div>
 
-                  <div style={{ padding: '14px', borderRadius: 'var(--radius-md)', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>X (Twitter) API v2</div>
-                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>Connect via OAuth 2.0 PKCE / API keys</div>
-                    </div>
-                    <span className="badge badge-success">READY</span>
+                  {/* Direct link to Social Accounts Manager */}
+                  <div style={{ textAlign: 'center', marginBottom: '18px' }}>
+                    <Link
+                      href="/social-accounts"
+                      onClick={() => setShowOnboarding(false)}
+                      style={{ fontSize: '0.82rem', color: '#4f46e5', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                    >
+                      <Share2 size={13} /> Open Full Social Accounts Page <ExternalLink size={12} />
+                    </Link>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setOnboardingStep(2)}
+                      style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', padding: '10px 16px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Skip For Now
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOnboardingStep(2)}
+                      className="btn btn-primary"
+                      style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.88rem' }}
+                    >
+                      Next: Topics & Brand Voice <ArrowRight size={16} />
+                    </button>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => setOnboardingStep(2)}
-                  className="btn btn-primary"
-                  style={{ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  Next: Topics & Brand Voice <ArrowRight size={16} />
-                </button>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Step 2: Topics & Brand Voice */}
             {onboardingStep === 2 && (
