@@ -20,9 +20,10 @@ export async function POST(req: NextRequest) {
 async function handleCronTrigger(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
+  const querySecret = req.nextUrl.searchParams.get('key') || req.nextUrl.searchParams.get('secret');
 
   // If CRON_SECRET is configured in environment variables, enforce authentication
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}` && querySecret !== cronSecret) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized: Invalid or missing Cron secret.' },
       { status: 401 }
