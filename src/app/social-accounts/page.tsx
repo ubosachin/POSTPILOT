@@ -13,7 +13,9 @@ import {
   Lock,
   Edit3,
   X,
-  AlertCircle
+  AlertCircle,
+  Key,
+  CheckCircle
 } from 'lucide-react';
 import { SocialAccount } from '@/types';
 
@@ -37,6 +39,7 @@ export default function SocialAccountsPage() {
   const [xApiSecret, setXApiSecret] = useState('');
   const [xAccessToken, setXAccessToken] = useState('');
   const [xAccessSecret, setXAccessSecret] = useState('');
+  const [showXAdvanced, setShowXAdvanced] = useState(false);
 
   // Edit Account Modal State
   const [editingAccount, setEditingAccount] = useState<SocialAccount | null>(null);
@@ -236,22 +239,25 @@ export default function SocialAccountsPage() {
 
   const handleConnectX = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!xHandle || !xApiKey) return;
+    if (!xHandle.trim()) return;
     setIsSubmitting(true);
     try {
+      const credentials: Record<string, string> = {};
+      if (xApiKey.trim()) credentials.apiKey = xApiKey.trim();
+      if (xApiSecret.trim()) credentials.apiSecret = xApiSecret.trim();
+      if (xAccessToken.trim()) credentials.accessToken = xAccessToken.trim();
+      if (xAccessSecret.trim()) credentials.accessTokenSecret = xAccessSecret.trim();
+
+      const cleanHandle = xHandle.trim().replace(/^@/, '');
+
       const res = await fetch('/api/social-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           platform: 'x',
-          accountId: xHandle,
-          displayName: `X (@${xHandle.replace('@', '')})`,
-          credentials: {
-            apiKey: xApiKey,
-            apiSecret: xApiSecret,
-            accessToken: xAccessToken,
-            accessTokenSecret: xAccessSecret,
-          },
+          accountId: cleanHandle,
+          displayName: `X (@${cleanHandle})`,
+          credentials,
         }),
       });
       if (res.ok) {
@@ -261,6 +267,7 @@ export default function SocialAccountsPage() {
         setXApiSecret('');
         setXAccessToken('');
         setXAccessSecret('');
+        setShowXAdvanced(false);
         showToast('Connected X account successfully!');
         fetchAccounts();
       } else {
@@ -948,96 +955,180 @@ export default function SocialAccountsPage() {
           padding: '20px'
         }}>
           <div className="glass-panel modal-dialog-content" style={{ width: '100%', maxWidth: '480px', padding: 'clamp(18px, 4vw, 24px)', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
-              Connect X Account (v2 API)
-            </h3>
-            <p style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '16px' }}>
-              Enter your verified X developer application credentials with write permissions.
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: 800, fontSize: '1rem' }}>
+                  𝕏
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Connect X (Twitter)
+                  </h3>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    Publish & schedule posts to your feed
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowXModal(false); setShowXAdvanced(false); }}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              fontSize: '0.82rem',
+              color: '#166534',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <CheckCircle size={16} color="#16a34a" style={{ flexShrink: 0 }} />
+              <span><strong>Instant Connect:</strong> PostPilot verified server gateway handles publishing automatically. Just enter your handle below!</span>
+            </div>
 
             <form onSubmit={handleConnectX}>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#334155', fontWeight: 600, marginBottom: '4px' }}>
-                  X Handle
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', color: '#334155', fontWeight: 600, marginBottom: '6px' }}>
+                  X Handle <span style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <input
-                  type="text"
-                  value={xHandle}
-                  onChange={(e) => setXHandle(e.target.value)}
-                  placeholder="e.g. MyBrandApp"
-                  className="input-field"
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#334155', fontWeight: 600, marginBottom: '4px' }}>
-                    API Key
-                  </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontWeight: 600, fontSize: '0.9rem' }}>
+                    @
+                  </span>
                   <input
-                    type="password"
-                    value={xApiKey}
-                    onChange={(e) => setXApiKey(e.target.value)}
+                    type="text"
+                    value={xHandle.replace(/^@/, '')}
+                    onChange={(e) => setXHandle(e.target.value.replace(/^@/, ''))}
+                    placeholder="e.g. MyBrandApp or your_handle"
                     className="input-field"
+                    style={{ paddingLeft: '28px' }}
                     required
+                    autoFocus
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#334155', fontWeight: 600, marginBottom: '4px' }}>
-                    API Secret
-                  </label>
-                  <input
-                    type="password"
-                    value={xApiSecret}
-                    onChange={(e) => setXApiSecret(e.target.value)}
-                    className="input-field"
-                    required
-                  />
+                <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px' }}>
+                  Posts generated by PostPilot AI will be scheduled for this account.
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#334155', fontWeight: 600, marginBottom: '4px' }}>
-                    Access Token
-                  </label>
-                  <input
-                    type="password"
-                    value={xAccessToken}
-                    onChange={(e) => setXAccessToken(e.target.value)}
-                    className="input-field"
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#334155', fontWeight: 600, marginBottom: '4px' }}>
-                    Token Secret
-                  </label>
-                  <input
-                    type="password"
-                    value={xAccessSecret}
-                    onChange={(e) => setXAccessSecret(e.target.value)}
-                    className="input-field"
-                    required
-                  />
-                </div>
+              {/* Collapsible Advanced Developer Keys Toggle */}
+              <div style={{ marginBottom: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowXAdvanced(!showXAdvanced)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#6366f1',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 0',
+                    marginBottom: showXAdvanced ? '12px' : '0'
+                  }}
+                >
+                  <Key size={13} />
+                  <span>{showXAdvanced ? 'Hide Custom Developer Keys' : 'Advanced: Custom Developer Keys (Optional)'}</span>
+                </button>
+
+                {showXAdvanced && (
+                  <div style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}>
+                    <p style={{ fontSize: '0.74rem', color: '#64748b', marginBottom: '10px' }}>
+                      Only fill these in if you want to use your own Twitter Developer Portal application credentials instead of PostPilot&apos;s verified gateway.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', color: '#475569', fontWeight: 600, marginBottom: '2px' }}>
+                          API Key
+                        </label>
+                        <input
+                          type="password"
+                          value={xApiKey}
+                          onChange={(e) => setXApiKey(e.target.value)}
+                          placeholder="Optional"
+                          className="input-field"
+                          style={{ fontSize: '0.78rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', color: '#475569', fontWeight: 600, marginBottom: '2px' }}>
+                          API Secret
+                        </label>
+                        <input
+                          type="password"
+                          value={xApiSecret}
+                          onChange={(e) => setXApiSecret(e.target.value)}
+                          placeholder="Optional"
+                          className="input-field"
+                          style={{ fontSize: '0.78rem' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', color: '#475569', fontWeight: 600, marginBottom: '2px' }}>
+                          Access Token
+                        </label>
+                        <input
+                          type="password"
+                          value={xAccessToken}
+                          onChange={(e) => setXAccessToken(e.target.value)}
+                          placeholder="Optional"
+                          className="input-field"
+                          style={{ fontSize: '0.78rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', color: '#475569', fontWeight: 600, marginBottom: '2px' }}>
+                          Token Secret
+                        </label>
+                        <input
+                          type="password"
+                          value={xAccessSecret}
+                          onChange={(e) => setXAccessSecret(e.target.value)}
+                          placeholder="Optional"
+                          className="input-field"
+                          style={{ fontSize: '0.78rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
                   type="button"
-                  onClick={() => setShowXModal(false)}
+                  onClick={() => { setShowXModal(false); setShowXAdvanced(false); }}
                   className="btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !xHandle.trim()}
                   className="btn-primary btn-x"
                 >
-                  {isSubmitting ? 'Validating...' : 'Connect X'}
+                  {isSubmitting ? 'Connecting...' : 'Connect X Account'}
                 </button>
               </div>
             </form>
