@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="favBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="50%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+    <linearGradient id="favWingL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="favWingR" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="favSpine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="128" height="128" rx="28" fill="url(#favBg)"/>
+  <rect width="126" height="126" x="1" y="1" rx="27" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.3"/>
+
+  <!-- Radio Arc Waves -->
+  <path d="M 52 36 A 35 35 0 0 1 97 81" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 58 46 A 23 23 0 0 1 88 75" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- The PostPilot Origami Jet -->
+  <g>
+    <polygon points="102,26 31,64 57,75" fill="url(#favWingL)"/>
+    <polygon points="57,75 64,90 70,76" fill="#1e1b4b"/>
+    <polygon points="102,26 57,75 89,91" fill="url(#favWingR)"/>
+    <polygon points="102,26 66,70 57,75" fill="url(#favSpine)"/>
+    
+    <polyline points="31,64 102,26 89,91" fill="none" stroke="#f0f9ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="102" y1="26" x2="57" y2="75" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+    
+    <circle cx="102" cy="26" r="3.5" fill="#38bdf8"/>
+    <circle cx="102" cy="26" r="1.5" fill="#ffffff"/>
+  </g>
+</svg>
