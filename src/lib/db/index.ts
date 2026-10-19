@@ -38,7 +38,7 @@ export async function connectToDatabase(): Promise<{ isMemoryFallback: boolean }
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 2000, // Quick timeout to fall back to memoryStore smoothly
+      serverSelectionTimeoutMS: 5000, // 5s timeout for reliable Atlas TLS handshake
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
