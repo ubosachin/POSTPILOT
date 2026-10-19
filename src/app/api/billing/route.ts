@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore } from '@/lib/db';
 import { SubscriptionPlanId } from '@/types';
 
 const PLANS: Record<SubscriptionPlanId, {
@@ -64,6 +64,8 @@ export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
 
+  await connectToDatabase();
+
   const workspaceId = session.workspaceId;
 
   const subscription = memoryStore.subscriptions.get(workspaceId);
@@ -95,6 +97,8 @@ export async function POST(req: NextRequest) {
     if (!hasPermission(session.role, 'canManageBilling')) {
       return forbiddenResponse('Forbidden: Only Workspace Owners and Admins have permission to manage billing and plans.');
     }
+
+    await connectToDatabase();
 
     const workspaceId = session.workspaceId;
     const body = await req.json();

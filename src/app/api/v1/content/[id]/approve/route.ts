@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, forbiddenResponse, hasPermission } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function POST(
   req: NextRequest,
@@ -12,6 +12,8 @@ export async function POST(
     return forbiddenResponse('Viewers do not have permission to approve content variants.');
   }
 
+  await connectToDatabase();
+
   const { id: variantId } = await params;
   const variant = memoryStore.contentVariants.get(variantId);
 
@@ -21,6 +23,8 @@ export async function POST(
 
   variant.approvalStatus = 'approved';
   variant.updatedAt = new Date();
+
+  await persistenceBridge.persistContentVariant(variant);
 
   memoryStore.addAuditLog({
     workspaceId: session.workspaceId,

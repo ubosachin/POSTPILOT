@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { CREDIT_PACKAGES } from '@/lib/credits/pricing';
 import { PaymentOrder } from '@/types';
 
@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await connectToDatabase();
+
     const body = await req.json();
     const { packageId } = body;
 
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
     };
 
     memoryStore.paymentOrders.set(orderId, paymentOrder);
+    await persistenceBridge.persistPaymentOrder(paymentOrder);
 
     memoryStore.addAuditLog({
       workspaceId: session.workspaceId,
@@ -61,7 +64,6 @@ export async function POST(req: NextRequest) {
         currency: 'INR',
         credits: pkg.credits,
         packageName: pkg.name,
-        key: process.env.RAZORPAY_KEY_ID || 'rzp_test_sampleKey123',
       },
     });
   } catch (err) {

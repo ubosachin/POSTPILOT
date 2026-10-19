@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 import { UserRole } from '@/types';
+export type { UserRole };
 
 const JWT_SECRET = process.env.JWT_SECRET || 'postpilot-dev-jwt-super-secret-key-32-chars-minimum';
 
@@ -84,8 +85,8 @@ export function getAuthSession(req: NextRequest): AuthSession | null {
     if (session) return session;
   }
 
-  // Check Cookie
-  const cookieToken = req.cookies.get('pp_session')?.value;
+  // Check Cookie (supports pp_session and postpilot_session)
+  const cookieToken = req.cookies.get('pp_session')?.value || req.cookies.get('postpilot_session')?.value;
   if (cookieToken) {
     const session = verifyToken(cookieToken);
     if (session) return session;

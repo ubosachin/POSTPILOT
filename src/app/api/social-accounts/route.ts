@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { encryptCredentials } from '@/lib/crypto';
 import { SocialAccount } from '@/types';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
+
+  await connectToDatabase();
 
   const workspaceId = session.workspaceId;
 
@@ -33,6 +35,8 @@ export async function POST(req: NextRequest) {
     if (!hasPermission(session.role, 'canManageSocialAccounts')) {
       return forbiddenResponse('Forbidden: Only Workspace Owners and Admins have permission to connect or manage social accounts.');
     }
+
+    await connectToDatabase();
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
@@ -101,9 +105,8 @@ export async function POST(req: NextRequest) {
       memoryStore.socialAccounts.set(account.id, account);
     }
 
-    // Persist to MongoDB Atlas asynchronously
-    const { persistenceBridge } = await import('@/lib/db/persistence');
-    persistenceBridge.persistSocialAccount(account).catch(() => {});
+    // Persist to MongoDB Atlas
+    await persistenceBridge.persistSocialAccount(account);
 
     memoryStore.addAuditLog({
       workspaceId,
@@ -136,12 +139,15 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Account ID required' }, { status: 400 });
   }
 
+  await connectToDatabase();
+
   const account = memoryStore.socialAccounts.get(accountId);
   if (!account || account.workspaceId !== workspaceId) {
     return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
   }
 
   memoryStore.socialAccounts.delete(accountId);
+  await persistenceBridge.deleteSocialAccount(accountId, workspaceId);
 
   memoryStore.addAuditLog({
     workspaceId,

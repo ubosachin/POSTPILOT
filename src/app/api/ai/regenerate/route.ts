@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, hasPermission, unauthorizedResponse, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { regenerateSinglePlatform } from '@/lib/ai/generator';
 import { creditEngine } from '@/lib/credits/creditEngine';
 import { CREDIT_POLICY } from '@/lib/credits/pricing';
@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
     if (!hasPermission(session.role, 'canGenerateContent')) {
       return forbiddenResponse('Forbidden: Your role does not have permission to regenerate AI content.');
     }
+
+    await connectToDatabase();
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
@@ -80,6 +82,8 @@ export async function POST(req: NextRequest) {
     variant.version += 1;
     variant.approvalStatus = 'draft';
     variant.updatedAt = new Date();
+
+    await persistenceBridge.persistContentVariant(variant);
 
     memoryStore.addAuditLog({
       workspaceId,

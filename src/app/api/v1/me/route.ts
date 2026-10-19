@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { creditEngine } from '@/lib/credits/creditEngine';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
+
+  await connectToDatabase();
 
   const user = memoryStore.users.get(session.userId);
   const workspace = memoryStore.workspaces.get(session.workspaceId);
@@ -27,6 +29,8 @@ export async function PATCH(req: NextRequest) {
   if (!session) return unauthorizedResponse();
 
   try {
+    await connectToDatabase();
+
     const body = await req.json().catch(() => ({}));
     let user = memoryStore.users.get(session.userId);
 
@@ -50,9 +54,7 @@ export async function PATCH(req: NextRequest) {
 
     memoryStore.users.set(user.id, user);
 
-    // Dynamic import to avoid circular dependency
-    const { persistenceBridge } = await import('@/lib/db/persistence');
-    persistenceBridge.persistUser(user).catch(() => {});
+    await persistenceBridge.persistUser(user);
 
     return NextResponse.json({
       success: true,

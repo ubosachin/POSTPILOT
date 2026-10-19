@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
         createdAt: new Date(),
       };
       memoryStore.users.set(user.id, user);
-      persistenceBridge.persistUser(user).catch(() => {});
+      await persistenceBridge.persistUser(user);
 
       // Create initial workspace for new user
       const ws = {
@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
         createdAt: new Date(),
       };
       memoryStore.workspaces.set(ws.id, ws);
-      persistenceBridge.persistWorkspace(ws).catch(() => {});
+      await persistenceBridge.persistWorkspace(ws);
       workspaceId = ws.id;
 
       // Create owner membership
@@ -143,9 +143,10 @@ export async function GET(req: NextRequest) {
         createdAt: new Date(),
       };
       memoryStore.memberships.set(mem.id, mem);
+      await persistenceBridge.persistMembership(mem);
 
       // Initialize default brand profile
-      memoryStore.brandProfiles.set(ws.id, {
+      const bp = {
         id: `bp_${ws.id}`,
         workspaceId: ws.id,
         voice: 'Insightful & Pragmatic Builder',
@@ -153,7 +154,9 @@ export async function GET(req: NextRequest) {
         topics: ['AI Automation', 'Micro-SaaS Growth', 'Social Publishing'],
         rules: ['Engage directly', 'Hook in first line', 'Clear actionable insight'],
         updatedAt: new Date(),
-      });
+      };
+      memoryStore.brandProfiles.set(ws.id, bp);
+      await persistenceBridge.persistBrandProfile(bp);
 
       // Grant exactly-once 50 free credits allowance
       await creditEngine.grantSignupCredits(ws.id, user.id);

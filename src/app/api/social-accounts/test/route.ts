@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { decryptCredentials } from '@/lib/crypto';
 import { blueskyAdapter, BlueskyCredentials } from '@/lib/adapters/bluesky';
 
@@ -12,6 +12,8 @@ export async function POST(req: NextRequest) {
     if (!hasPermission(session.role, 'canManageSocialAccounts')) {
       return forbiddenResponse('Forbidden: Only Workspace Owners and Admins have permission to test social account connections.');
     }
+
+    await connectToDatabase();
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
@@ -34,6 +36,7 @@ export async function POST(req: NextRequest) {
         account.status = 'active';
         account.lastVerifiedAt = new Date();
         account.errorMessage = undefined;
+        await persistenceBridge.persistSocialAccount(account);
         return NextResponse.json({
           success: true,
           message: `Bluesky session successfully verified for @${verifyRes.handle || account.accountId}`,
@@ -41,6 +44,7 @@ export async function POST(req: NextRequest) {
       } else {
         account.status = 'needs_reauthorization';
         account.errorMessage = verifyRes.error;
+        await persistenceBridge.persistSocialAccount(account);
         return NextResponse.json({
           success: false,
           error: verifyRes.error,

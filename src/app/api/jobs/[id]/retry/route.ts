@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore } from '@/lib/db';
 import { executePublishingJob } from '@/lib/queue/publisherQueue';
 
 export async function POST(
@@ -14,6 +14,8 @@ export async function POST(
     if (!hasPermission(session.role, 'canPublishJobs')) {
       return forbiddenResponse('Forbidden: Your role does not have permission to trigger or retry publishing jobs.');
     }
+
+    await connectToDatabase();
 
     const workspaceId = session.workspaceId;
     const { id: jobId } = await params;

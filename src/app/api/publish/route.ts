@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, forbiddenResponse, hasPermission } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
-import { persistenceBridge } from '@/lib/db/persistence';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { executePublishingJob } from '@/lib/queue/publisherQueue';
 import { PublishingJob } from '@/types';
 
@@ -14,6 +13,9 @@ export async function POST(req: NextRequest) {
     if (!hasPermission(session.role, 'canPublishJobs')) {
       return forbiddenResponse('Viewers do not have permission to publish content. Please contact an admin.');
     }
+
+    await connectToDatabase();
+
     const workspaceId = session.workspaceId;
     const body = await req.json();
 
@@ -33,6 +35,8 @@ export async function POST(req: NextRequest) {
       variant.approvalStatus = 'approved';
       variant.quoraAnswerStatus = 'manually_published';
       variant.updatedAt = new Date();
+
+      await persistenceBridge.persistContentVariant(variant);
 
       memoryStore.addAuditLog({
         workspaceId,
@@ -110,8 +114,8 @@ export async function POST(req: NextRequest) {
 
     // Approve the variant automatically upon scheduling or publishing
     variant.approvalStatus = 'approved';
-    persistenceBridge.persistPublishingJob(job).catch(() => {});
-    persistenceBridge.persistContentVariant(variant).catch(() => {});
+    await persistenceBridge.persistPublishingJob(job);
+    await persistenceBridge.persistContentVariant(variant);
 
     if (publishNow) {
       // Execute vertical slice publish immediately

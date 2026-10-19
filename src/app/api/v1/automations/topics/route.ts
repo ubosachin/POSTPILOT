@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { DailyTopic } from '@/types';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
+
+  await connectToDatabase();
 
   const url = new URL(req.url);
   const automationId = url.searchParams.get('automationId') || undefined;
@@ -26,6 +28,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await connectToDatabase();
+
     const body = await req.json();
     const { automationId, date, topic, instructions } = body;
 
@@ -49,6 +53,7 @@ export async function POST(req: NextRequest) {
     };
 
     memoryStore.dailyTopics.set(id, dailyTopic);
+    await persistenceBridge.persistDailyTopic(dailyTopic);
 
     memoryStore.addAuditLog({
       workspaceId: session.workspaceId,
@@ -62,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      topic: dailyTopic,
+      dailyTopic,
     });
   } catch (err) {
     return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });

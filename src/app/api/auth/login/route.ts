@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createToken } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
-import { persistenceBridge } from '@/lib/db/persistence';
+import { UserRole } from '@/types';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { creditEngine } from '@/lib/credits/creditEngine';
 
 export async function POST(req: NextRequest) {
   try {
+    await connectToDatabase();
+
     const body = await req.json().catch(() => ({}));
     const rawEmail = body.email;
 
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
     let isNewUser = false;
     let user = Array.from(memoryStore.users.values()).find((u) => u.email.toLowerCase() === email);
     let workspaceId = 'ws_postpilot_main';
-    let role = 'owner';
+    let role: UserRole = 'owner';
 
     if (!user) {
       isNewUser = true;
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
         createdAt: new Date(),
       };
       memoryStore.users.set(user.id, user);
-      persistenceBridge.persistUser(user).catch(() => {});
+      await persistenceBridge.persistUser(user);
 
       // Create initial workspace for new user
       const ws = {
@@ -55,20 +57,22 @@ export async function POST(req: NextRequest) {
         createdAt: new Date(),
       };
       memoryStore.workspaces.set(ws.id, ws);
-      persistenceBridge.persistWorkspace(ws).catch(() => {});
+      await persistenceBridge.persistWorkspace(ws);
       workspaceId = ws.id;
 
       // Create owner membership
-      memoryStore.memberships.set(`mem_${Date.now()}`, {
+      const mem = {
         id: `mem_${Date.now()}`,
         workspaceId: ws.id,
         userId: user.id,
-        role: 'owner',
+        role: 'owner' as UserRole,
         createdAt: new Date(),
-      });
+      };
+      memoryStore.memberships.set(mem.id, mem);
+      await persistenceBridge.persistMembership(mem);
 
       // Initialize default brand profile
-      memoryStore.brandProfiles.set(ws.id, {
+      const bp = {
         id: `bp_${ws.id}`,
         workspaceId: ws.id,
         voice: 'Insightful & Pragmatic Builder',
@@ -76,7 +80,9 @@ export async function POST(req: NextRequest) {
         topics: ['AI Automation', 'Micro-SaaS Growth', 'Social Publishing'],
         rules: ['Engage directly', 'Hook in first line', 'Clear actionable insight'],
         updatedAt: new Date(),
-      });
+      };
+      memoryStore.brandProfiles.set(ws.id, bp);
+      await persistenceBridge.persistBrandProfile(bp);
 
       // Grant exactly-once free credit allowance
       await creditEngine.grantSignupCredits(ws.id, user.id);
@@ -86,7 +92,7 @@ export async function POST(req: NextRequest) {
       const membership = Array.from(memoryStore.memberships.values()).find((m) => m.userId === currentUserId);
       if (membership) {
         workspaceId = membership.workspaceId;
-        role = membership.role;
+        role = membership.role as UserRole;
       }
     }
 
@@ -95,7 +101,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       name: user.name,
       workspaceId,
-      role: role as any,
+      role,
     });
 
     const wallet = await creditEngine.getWallet(workspaceId);
@@ -108,19 +114,30 @@ export async function POST(req: NextRequest) {
       role,
       isNewUser,
       credits: wallet.balance,
+      message: isNewUser ? 'Welcome to PostPilot! 50 free AI credits have been added.' : 'Logged in successfully.',
     });
 
-    // Set cookie for browser sessions
     response.cookies.set('pp_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
+
+    response.cookies.set('postpilot_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
     return response;
   } catch (err) {
-    return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: (err as Error).message },
+      { status: 500 }
+    );
   }
 }

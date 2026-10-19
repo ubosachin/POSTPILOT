@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, forbiddenResponse, hasPermission } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function DELETE(
   req: NextRequest,
@@ -12,6 +12,8 @@ export async function DELETE(
     return forbiddenResponse('Only workspace owners and admins can disconnect social accounts.');
   }
 
+  await connectToDatabase();
+
   const { id } = await params;
   const account = memoryStore.socialAccounts.get(id);
 
@@ -20,6 +22,7 @@ export async function DELETE(
   }
 
   memoryStore.socialAccounts.delete(id);
+  await persistenceBridge.deleteSocialAccount(id, session.workspaceId);
 
   memoryStore.addAuditLog({
     workspaceId: session.workspaceId,

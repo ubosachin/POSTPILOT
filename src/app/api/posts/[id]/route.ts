@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function PATCH(
   req: NextRequest,
@@ -13,6 +13,8 @@ export async function PATCH(
     if (!hasPermission(session.role, 'canApprovePosts')) {
       return forbiddenResponse('Forbidden: Your role does not have permission to edit or approve content.');
     }
+
+    await connectToDatabase();
 
     const workspaceId = session.workspaceId;
     const { id: variantId } = await params;
@@ -41,6 +43,8 @@ export async function PATCH(
     }
 
     variant.updatedAt = new Date();
+
+    await persistenceBridge.persistContentVariant(variant);
 
     memoryStore.addAuditLog({
       workspaceId,
@@ -72,6 +76,8 @@ export async function DELETE(
     return forbiddenResponse('Forbidden: Your role does not have permission to delete content.');
   }
 
+  await connectToDatabase();
+
   const workspaceId = session.workspaceId;
   const { id } = await params;
 
@@ -86,6 +92,7 @@ export async function DELETE(
           memoryStore.contentVariants.delete(vId);
         }
       }
+      await persistenceBridge.deleteContentItem(id, workspaceId);
       return NextResponse.json({ success: true, message: 'Content item and variants deleted' });
     }
   }
@@ -94,6 +101,7 @@ export async function DELETE(
     const variant = memoryStore.contentVariants.get(id);
     if (variant && variant.workspaceId === workspaceId) {
       memoryStore.contentVariants.delete(id);
+      await persistenceBridge.deleteContentVariant(id, workspaceId);
       return NextResponse.json({ success: true, message: 'Variant deleted' });
     }
   }

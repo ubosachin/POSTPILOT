@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
+import { connectToDatabase } from '@/lib/db';
 import { automationEngine } from '@/lib/automations/automationEngine';
 
 export async function POST(
@@ -12,6 +13,8 @@ export async function POST(
   if (!hasPermission(session.role, 'canManageAutomations')) {
     return forbiddenResponse('Forbidden: Your role does not have permission to cancel automations.');
   }
+
+  await connectToDatabase();
 
   const { id } = await params;
   try {

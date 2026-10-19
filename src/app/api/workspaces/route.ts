@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
+
+  await connectToDatabase();
 
   const workspaceId = session.workspaceId;
 
@@ -28,6 +30,8 @@ export async function PATCH(req: NextRequest) {
     return forbiddenResponse('Forbidden: Only Workspace Owners and Admins have permission to modify workspace and brand profile settings.');
   }
 
+  await connectToDatabase();
+
   const workspaceId = session.workspaceId;
   const body = await req.json();
 
@@ -38,6 +42,7 @@ export async function PATCH(req: NextRequest) {
 
   if (body.name) workspace.name = body.name;
   if (body.timezone) workspace.timezone = body.timezone;
+  await persistenceBridge.persistWorkspace(workspace);
 
   // Update brand profile if provided
   if (body.brandProfile) {
@@ -60,6 +65,7 @@ export async function PATCH(req: NextRequest) {
       if (body.brandProfile.rules) bp.rules = body.brandProfile.rules;
       bp.updatedAt = new Date();
     }
+    await persistenceBridge.persistBrandProfile(bp);
   }
 
   memoryStore.addAuditLog({

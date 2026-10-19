@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { automationEngine } from '@/lib/automations/automationEngine';
 
 export async function GET(
@@ -9,6 +9,8 @@ export async function GET(
 ) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
+
+  await connectToDatabase();
 
   const { id } = await params;
   const automation = memoryStore.contentAutomations.get(id);
@@ -31,6 +33,8 @@ export async function PATCH(
     return forbiddenResponse('Forbidden: Your role does not have permission to update automations.');
   }
 
+  await connectToDatabase();
+
   const { id } = await params;
   try {
     const body = await req.json();
@@ -52,6 +56,8 @@ export async function DELETE(
     return forbiddenResponse('Forbidden: Your role does not have permission to delete automations.');
   }
 
+  await connectToDatabase();
+
   const { id } = await params;
   const automation = memoryStore.contentAutomations.get(id);
 
@@ -60,5 +66,6 @@ export async function DELETE(
   }
 
   memoryStore.contentAutomations.delete(id);
+  await persistenceBridge.deleteContentAutomation(id, session.workspaceId);
   return NextResponse.json({ success: true, message: 'Automation deleted' });
 }

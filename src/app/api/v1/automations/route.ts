@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore } from '@/lib/db';
 import { automationEngine } from '@/lib/automations/automationEngine';
 
 export async function GET(req: NextRequest) {
   const session = getAuthSession(req);
   if (!session) return unauthorizedResponse();
+
+  await connectToDatabase();
 
   const automations = memoryStore.getContentAutomations(session.workspaceId);
   return NextResponse.json({
@@ -21,6 +23,8 @@ export async function POST(req: NextRequest) {
   if (!hasPermission(session.role, 'canManageAutomations')) {
     return forbiddenResponse('Forbidden: Your role does not have permission to create or manage automations.');
   }
+
+  await connectToDatabase();
 
   try {
     const body = await req.json();

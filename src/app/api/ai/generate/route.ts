@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date(),
     };
     memoryStore.contentItems.set(contentItemId, contentItem);
-    persistenceBridge.persistContentItem(contentItem).catch(() => {});
+    await persistenceBridge.persistContentItem(contentItem);
 
     // 7. Save ContentVariants
     const savedVariants: ContentVariant[] = [];
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       };
       memoryStore.contentVariants.set(variantId, variant);
-      persistenceBridge.persistContentVariant(variant).catch(() => {});
+      await persistenceBridge.persistContentVariant(variant);
       savedVariants.push(variant);
     }
 

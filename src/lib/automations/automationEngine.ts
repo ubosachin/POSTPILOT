@@ -5,6 +5,7 @@
  */
 
 import { memoryStore } from '../db/memoryStore';
+import { persistenceBridge } from '../db/persistence';
 import { ContentAutomation, DailyTopic, PublishingJob, Platform } from '@/types';
 
 export interface ScheduleSlotPreview {
@@ -138,6 +139,7 @@ export class AutomationEngine {
     };
 
     memoryStore.contentAutomations.set(id, automation);
+    await persistenceBridge.persistContentAutomation(automation);
 
     memoryStore.addAuditLog({
       workspaceId,
@@ -163,6 +165,7 @@ export class AutomationEngine {
 
     auto.status = 'paused';
     auto.updatedAt = new Date();
+    await persistenceBridge.persistContentAutomation(auto);
 
     memoryStore.addAuditLog({
       workspaceId,
@@ -188,6 +191,7 @@ export class AutomationEngine {
 
     auto.status = 'active';
     auto.updatedAt = new Date();
+    await persistenceBridge.persistContentAutomation(auto);
 
     memoryStore.addAuditLog({
       workspaceId,
@@ -213,12 +217,14 @@ export class AutomationEngine {
 
     auto.status = 'completed';
     auto.updatedAt = new Date();
+    await persistenceBridge.persistContentAutomation(auto);
 
     // Cancel all scheduled or retry_wait jobs associated with this automation
     for (const job of memoryStore.publishingJobs.values()) {
       if (job.workspaceId === workspaceId && (job.status === 'scheduled' || job.status === 'retry_wait')) {
         job.status = 'cancelled';
         job.updatedAt = new Date();
+        persistenceBridge.persistPublishingJob(job).catch(() => {});
       }
     }
 

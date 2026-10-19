@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, unauthorizedResponse, forbiddenResponse, hasPermission } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { encryptCredentials } from '@/lib/crypto';
 import { Platform, SocialAccount } from '@/types';
 
@@ -20,6 +20,8 @@ export async function POST(
   }
 
   try {
+    await connectToDatabase();
+
     const body = await req.json();
     const { accountId, displayName, credentials } = body;
 
@@ -56,6 +58,8 @@ export async function POST(
       };
       memoryStore.socialAccounts.set(account.id, account);
     }
+
+    await persistenceBridge.persistSocialAccount(account);
 
     memoryStore.addAuditLog({
       workspaceId: session.workspaceId,

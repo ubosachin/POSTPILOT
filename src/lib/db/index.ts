@@ -28,6 +28,9 @@ if (!global.mongooseCache) {
 export async function connectToDatabase(): Promise<{ isMemoryFallback: boolean }> {
   if (cached.conn) {
     persistenceBridge.setConnected(true);
+    if (!persistenceBridge.getIsHydrated()) {
+      await persistenceBridge.syncFromMongoDB();
+    }
     return { isMemoryFallback: false };
   }
 
@@ -41,9 +44,10 @@ export async function connectToDatabase(): Promise<{ isMemoryFallback: boolean }
       serverSelectionTimeoutMS: 5000, // 5s timeout for reliable Atlas TLS handshake
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then(async (m) => {
       console.log('[Database] Connected to MongoDB at', MONGODB_URI);
       persistenceBridge.setConnected(true);
+      await persistenceBridge.syncFromMongoDB();
       return m;
     }).catch((err) => {
       console.warn(`[Database] MongoDB connection skipped (${err.message}). Activating local resilient memory store.`);
@@ -58,6 +62,9 @@ export async function connectToDatabase(): Promise<{ isMemoryFallback: boolean }
     if (conn) {
       cached.conn = conn;
       persistenceBridge.setConnected(true);
+      if (!persistenceBridge.getIsHydrated()) {
+        await persistenceBridge.syncFromMongoDB();
+      }
       return { isMemoryFallback: false };
     } else {
       cached.isMemoryFallback = true;
@@ -73,4 +80,3 @@ export async function connectToDatabase(): Promise<{ isMemoryFallback: boolean }
 
 export { memoryStore, MemoryStore, persistenceBridge };
 export * from '../models';
-

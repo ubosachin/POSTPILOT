@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getAuthSession, unauthorizedResponse, hasPermission, forbiddenResponse } from '@/lib/auth';
-import { memoryStore } from '@/lib/db/memoryStore';
+import { connectToDatabase, memoryStore, persistenceBridge } from '@/lib/db';
 import { creditEngine } from '@/lib/credits/creditEngine';
 
 export async function POST(req: NextRequest) {
@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await connectToDatabase();
+
     const body = await req.json();
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, internalOrderId } = body;
 
@@ -56,6 +58,8 @@ export async function POST(req: NextRequest) {
     order.providerPaymentId = razorpay_payment_id;
     order.providerSignature = razorpay_signature;
     order.updatedAt = new Date();
+
+    await persistenceBridge.persistPaymentOrder(order);
 
     // Idempotently fulfill credits to wallet
     const fulfillResult = await creditEngine.fulfillCreditPurchase(

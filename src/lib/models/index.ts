@@ -1,21 +1,26 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 // 1. User Schema
-export interface IUser extends Document {
+export interface IUser extends Document<string> {
+  _id: string;
   email: string;
   name: string;
   authProvider: string;
+  avatar?: string;
   createdAt: Date;
 }
 const UserSchema = new Schema<IUser>({
+  _id: { type: String },
   email: { type: String, required: true, unique: true, index: true },
   name: { type: String, required: true },
   authProvider: { type: String, default: 'local' },
+  avatar: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 
 // 2. Workspace Schema
-export interface IWorkspace extends Document {
+export interface IWorkspace extends Document<string> {
+  _id: string;
   name: string;
   ownerId: string;
   planId: string;
@@ -23,6 +28,7 @@ export interface IWorkspace extends Document {
   createdAt: Date;
 }
 const WorkspaceSchema = new Schema<IWorkspace>({
+  _id: { type: String },
   name: { type: String, required: true },
   ownerId: { type: String, required: true, index: true },
   planId: { type: String, default: 'starter' },
@@ -31,13 +37,15 @@ const WorkspaceSchema = new Schema<IWorkspace>({
 });
 
 // 3. Membership Schema
-export interface IMembership extends Document {
+export interface IMembership extends Document<string> {
+  _id: string;
   workspaceId: string;
   userId: string;
   role: string;
   createdAt: Date;
 }
 const MembershipSchema = new Schema<IMembership>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   userId: { type: String, required: true, index: true },
   role: { type: String, enum: ['owner', 'admin', 'editor', 'viewer'], default: 'editor' },
@@ -46,7 +54,8 @@ const MembershipSchema = new Schema<IMembership>({
 MembershipSchema.index({ workspaceId: 1, userId: 1 }, { unique: true });
 
 // 4. SocialAccount Schema
-export interface ISocialAccount extends Document {
+export interface ISocialAccount extends Document<string> {
+  _id: string;
   workspaceId: string;
   platform: 'x' | 'bluesky';
   accountId: string;
@@ -58,6 +67,7 @@ export interface ISocialAccount extends Document {
   createdAt: Date;
 }
 const SocialAccountSchema = new Schema<ISocialAccount>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   platform: { type: String, required: true, enum: ['x', 'bluesky'] },
   accountId: { type: String, required: true },
@@ -71,7 +81,8 @@ const SocialAccountSchema = new Schema<ISocialAccount>({
 SocialAccountSchema.index({ workspaceId: 1, platform: 1, accountId: 1 }, { unique: true });
 
 // 5. BrandProfile Schema
-export interface IBrandProfile extends Document {
+export interface IBrandProfile extends Document<string> {
+  _id: string;
   workspaceId: string;
   voice: string;
   audience: string;
@@ -80,6 +91,7 @@ export interface IBrandProfile extends Document {
   updatedAt: Date;
 }
 const BrandProfileSchema = new Schema<IBrandProfile>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, unique: true, index: true },
   voice: { type: String, default: 'Authoritative, Engaging & Thought-Provoking' },
   audience: { type: String, default: 'Builders, SaaS founders, Creators, Engineers' },
@@ -89,7 +101,8 @@ const BrandProfileSchema = new Schema<IBrandProfile>({
 });
 
 // 6. ContentItem Schema
-export interface IContentItem extends Document {
+export interface IContentItem extends Document<string> {
+  _id: string;
   workspaceId: string;
   topic: string;
   goal: string;
@@ -100,6 +113,7 @@ export interface IContentItem extends Document {
   updatedAt: Date;
 }
 const ContentItemSchema = new Schema<IContentItem>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   topic: { type: String, required: true },
   goal: { type: String, default: 'Audience Engagement & Thought Leadership' },
@@ -112,7 +126,8 @@ const ContentItemSchema = new Schema<IContentItem>({
 ContentItemSchema.index({ workspaceId: 1, createdAt: -1 });
 
 // 7. ContentVariant Schema
-export interface IContentVariant extends Document {
+export interface IContentVariant extends Document<string> {
+  _id: string;
   contentItemId: string;
   workspaceId: string;
   platform: 'x' | 'bluesky' | 'quora';
@@ -126,6 +141,7 @@ export interface IContentVariant extends Document {
   updatedAt: Date;
 }
 const ContentVariantSchema = new Schema<IContentVariant>({
+  _id: { type: String },
   contentItemId: { type: String, required: true, index: true },
   workspaceId: { type: String, required: true, index: true },
   platform: { type: String, required: true, enum: ['x', 'bluesky', 'quora'] },
@@ -141,7 +157,8 @@ const ContentVariantSchema = new Schema<IContentVariant>({
 ContentVariantSchema.index({ workspaceId: 1, platform: 1 });
 
 // 8. PublishingJob Schema
-export interface IPublishingJob extends Document {
+export interface IPublishingJob extends Document<string> {
+  _id: string;
   workspaceId: string;
   variantId: string;
   socialAccountId: string;
@@ -156,6 +173,7 @@ export interface IPublishingJob extends Document {
   updatedAt: Date;
 }
 const PublishingJobSchema = new Schema<IPublishingJob>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   variantId: { type: String, required: true },
   socialAccountId: { type: String, required: true },
@@ -173,12 +191,12 @@ const PublishingJobSchema = new Schema<IPublishingJob>({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
-// Essential indexes specified in blueprint
 PublishingJobSchema.index({ status: 1, scheduledAt: 1 });
 PublishingJobSchema.index({ variantId: 1, socialAccountId: 1 }, { unique: true });
 
 // 9. PublishResult Schema
-export interface IPublishResult extends Document {
+export interface IPublishResult extends Document<string> {
+  _id: string;
   jobId: string;
   workspaceId: string;
   platform: string;
@@ -189,6 +207,7 @@ export interface IPublishResult extends Document {
   errorDetails?: string;
 }
 const PublishResultSchema = new Schema<IPublishResult>({
+  _id: { type: String },
   jobId: { type: String, required: true, index: true },
   workspaceId: { type: String, required: true, index: true },
   platform: { type: String, required: true },
@@ -200,7 +219,8 @@ const PublishResultSchema = new Schema<IPublishResult>({
 });
 
 // 10. UsageRecord Schema
-export interface IUsageRecord extends Document {
+export interface IUsageRecord extends Document<string> {
+  _id: string;
   workspaceId: string;
   period: string; // YYYY-MM
   metric: string;
@@ -208,6 +228,7 @@ export interface IUsageRecord extends Document {
   limit: number;
 }
 const UsageRecordSchema = new Schema<IUsageRecord>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   period: { type: String, required: true },
   metric: { type: String, required: true },
@@ -217,7 +238,8 @@ const UsageRecordSchema = new Schema<IUsageRecord>({
 UsageRecordSchema.index({ workspaceId: 1, period: 1, metric: 1 }, { unique: true });
 
 // 11. Subscription Schema
-export interface ISubscription extends Document {
+export interface ISubscription extends Document<string> {
+  _id: string;
   workspaceId: string;
   planId: string;
   provider: string;
@@ -230,6 +252,7 @@ export interface ISubscription extends Document {
   monthlyAiDraftQuota: number;
 }
 const SubscriptionSchema = new Schema<ISubscription>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, unique: true, index: true },
   planId: { type: String, required: true, default: 'starter' },
   provider: { type: String, default: 'razorpay' },
@@ -243,7 +266,8 @@ const SubscriptionSchema = new Schema<ISubscription>({
 });
 
 // 12. AuditLog Schema
-export interface IAuditLog extends Document {
+export interface IAuditLog extends Document<string> {
+  _id: string;
   workspaceId: string;
   actorId: string;
   actorName: string;
@@ -254,6 +278,7 @@ export interface IAuditLog extends Document {
   timestamp: Date;
 }
 const AuditLogSchema = new Schema<IAuditLog>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   actorId: { type: String, required: true },
   actorName: { type: String, default: 'System' },
@@ -266,7 +291,8 @@ const AuditLogSchema = new Schema<IAuditLog>({
 AuditLogSchema.index({ workspaceId: 1, timestamp: -1 });
 
 // 13. CreditWallet Schema
-export interface ICreditWallet extends Document {
+export interface ICreditWallet extends Document<string> {
+  _id: string;
   workspaceId: string;
   balance: number;
   reservedCredits: number;
@@ -276,6 +302,7 @@ export interface ICreditWallet extends Document {
   updatedAt: Date;
 }
 const CreditWalletSchema = new Schema<ICreditWallet>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, unique: true, index: true },
   balance: { type: Number, required: true, default: 0 },
   reservedCredits: { type: Number, required: true, default: 0 },
@@ -286,7 +313,8 @@ const CreditWalletSchema = new Schema<ICreditWallet>({
 });
 
 // 14. CreditLedgerEntry Schema
-export interface ICreditLedgerEntry extends Document {
+export interface ICreditLedgerEntry extends Document<string> {
+  _id: string;
   workspaceId: string;
   walletId: string;
   type: string;
@@ -298,6 +326,7 @@ export interface ICreditLedgerEntry extends Document {
   createdAt: Date;
 }
 const CreditLedgerEntrySchema = new Schema<ICreditLedgerEntry>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   walletId: { type: String, required: true, index: true },
   type: { 
@@ -315,7 +344,8 @@ const CreditLedgerEntrySchema = new Schema<ICreditLedgerEntry>({
 CreditLedgerEntrySchema.index({ workspaceId: 1, createdAt: -1 });
 
 // 15. CreditReservation Schema
-export interface ICreditReservation extends Document {
+export interface ICreditReservation extends Document<string> {
+  _id: string;
   workspaceId: string;
   amount: number;
   purpose: string;
@@ -324,6 +354,7 @@ export interface ICreditReservation extends Document {
   createdAt: Date;
 }
 const CreditReservationSchema = new Schema<ICreditReservation>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   amount: { type: Number, required: true },
   purpose: { type: String, required: true },
@@ -333,7 +364,8 @@ const CreditReservationSchema = new Schema<ICreditReservation>({
 });
 
 // 16. ContentAutomation Schema
-export interface IContentAutomation extends Document {
+export interface IContentAutomation extends Document<string> {
+  _id: string;
   workspaceId: string;
   name: string;
   topics: string[];
@@ -356,6 +388,7 @@ export interface IContentAutomation extends Document {
   updatedAt: Date;
 }
 const ContentAutomationSchema = new Schema<IContentAutomation>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   topics: { type: [String], default: [] },
@@ -380,7 +413,8 @@ const ContentAutomationSchema = new Schema<IContentAutomation>({
 ContentAutomationSchema.index({ workspaceId: 1, status: 1 });
 
 // 17. DailyTopic Schema
-export interface IDailyTopic extends Document {
+export interface IDailyTopic extends Document<string> {
+  _id: string;
   workspaceId: string;
   automationId: string;
   date: string;
@@ -391,6 +425,7 @@ export interface IDailyTopic extends Document {
   createdAt: Date;
 }
 const DailyTopicSchema = new Schema<IDailyTopic>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   automationId: { type: String, required: true, index: true },
   date: { type: String, required: true },
@@ -403,7 +438,8 @@ const DailyTopicSchema = new Schema<IDailyTopic>({
 DailyTopicSchema.index({ workspaceId: 1, automationId: 1, date: 1 });
 
 // 18. PaymentOrder Schema
-export interface IPaymentOrder extends Document {
+export interface IPaymentOrder extends Document<string> {
+  _id: string;
   workspaceId: string;
   packageId: string;
   credits: number;
@@ -419,6 +455,7 @@ export interface IPaymentOrder extends Document {
   updatedAt: Date;
 }
 const PaymentOrderSchema = new Schema<IPaymentOrder>({
+  _id: { type: String },
   workspaceId: { type: String, required: true, index: true },
   packageId: { type: String, required: true },
   credits: { type: Number, required: true },
@@ -454,4 +491,3 @@ export const CreditReservationModel: Model<ICreditReservation> = mongoose.models
 export const ContentAutomationModel: Model<IContentAutomation> = mongoose.models.ContentAutomation || mongoose.model<IContentAutomation>('ContentAutomation', ContentAutomationSchema);
 export const DailyTopicModel: Model<IDailyTopic> = mongoose.models.DailyTopic || mongoose.model<IDailyTopic>('DailyTopic', DailyTopicSchema);
 export const PaymentOrderModel: Model<IPaymentOrder> = mongoose.models.PaymentOrder || mongoose.model<IPaymentOrder>('PaymentOrder', PaymentOrderSchema);
-
