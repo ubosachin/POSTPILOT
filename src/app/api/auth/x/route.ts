@@ -12,10 +12,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const clientId = process.env.X_CLIENT_ID || process.env.X_API_KEY;
+  const clientId = process.env.X_CLIENT_ID;
   if (!clientId || clientId.trim() === '') {
     const redirect = new URL('/social-accounts', baseUrl);
-    redirect.searchParams.set('error', 'x_oauth_not_configured');
+    redirect.searchParams.set('error', 'x_client_id_missing');
     return NextResponse.redirect(redirect);
   }
 

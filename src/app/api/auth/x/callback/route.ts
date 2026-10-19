@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const clientId = process.env.X_CLIENT_ID || process.env.X_API_KEY;
-  const clientSecret = process.env.X_CLIENT_SECRET || process.env.X_API_SECRET;
+  const clientId = process.env.X_CLIENT_ID;
+  const clientSecret = process.env.X_CLIENT_SECRET;
 
   if (!clientId || clientId.trim() === '') {
     const errorRedirect = new URL('/social-accounts', baseUrl);

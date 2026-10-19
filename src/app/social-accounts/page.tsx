@@ -16,7 +16,9 @@ import {
   AlertCircle,
   Key,
   CheckCircle,
-  ExternalLink
+  ExternalLink,
+  Copy,
+  Check
 } from 'lucide-react';
 import { SocialAccount } from '@/types';
 
@@ -41,6 +43,8 @@ export default function SocialAccountsPage() {
   const [xAccessToken, setXAccessToken] = useState('');
   const [xAccessSecret, setXAccessSecret] = useState('');
   const [showXAdvanced, setShowXAdvanced] = useState(false);
+  const [showOAuthGuide, setShowOAuthGuide] = useState(false);
+  const [copiedCallback, setCopiedCallback] = useState(false);
 
   // Edit Account Modal State
   const [editingAccount, setEditingAccount] = useState<SocialAccount | null>(null);
@@ -104,8 +108,8 @@ export default function SocialAccountsPage() {
         fetchAccounts();
       } else if (error) {
         let msg = `OAuth connection notice: ${error}`;
-        if (error === 'x_oauth_not_configured' || error === 'x_not_configured') {
-          msg = 'Twitter OAuth 2.0 Client ID is not configured in server environment yet. Set X_CLIENT_ID & X_CLIENT_SECRET or use manual developer keys.';
+        if (error === 'x_client_id_missing' || error === 'x_oauth_not_configured' || error === 'x_not_configured') {
+          msg = 'Twitter OAuth 2.0 requires X_CLIENT_ID & X_CLIENT_SECRET. See the 3-step setup guide in Connect X.';
         } else if (error === 'invalid_state') {
           msg = 'Security token expired. Please try connecting X again.';
         }
@@ -1041,6 +1045,86 @@ export default function SocialAccountsPage() {
                 <span>Authorize with X (Twitter)</span>
                 <ExternalLink size={14} style={{ opacity: 0.7 }} />
               </a>
+
+              {/* Developer Setup Guide Toggle */}
+              <div style={{ marginTop: '12px', textAlign: 'left' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowOAuthGuide(!showOAuthGuide)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#6366f1',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: '2px 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span>{showOAuthGuide ? '▲ Hide Developer Portal Setup Steps' : '⚙️ Setting up OAuth in Developer Portal? Click for instructions'}</span>
+                </button>
+
+                {showOAuthGuide && (
+                  <div style={{
+                    marginTop: '8px',
+                    padding: '10px 12px',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    fontSize: '0.74rem',
+                    color: '#334155',
+                    lineHeight: 1.5
+                  }}>
+                    <strong style={{ color: '#0f172a' }}>Twitter Developer Portal Setup:</strong>
+                    <ol style={{ paddingLeft: '16px', margin: '6px 0 8px' }}>
+                      <li>Open <a href="https://developer.x.com" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>developer.x.com</a> → Your Project App → <strong>User authentication settings</strong>.</li>
+                      <li>Select <strong>Read and Write</strong> and <strong>Web App, Automated App or Bot</strong>.</li>
+                      <li>Paste this Callback URL:</li>
+                    </ol>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: '#f1f5f9',
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      marginBottom: '6px'
+                    }}>
+                      <code style={{ flex: 1, fontSize: '0.7rem', wordBreak: 'break-all', color: '#0f172a' }}>
+                        https://postpilot-ucct.vercel.app/api/auth/x/callback
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('https://postpilot-ucct.vercel.app/api/auth/x/callback');
+                          setCopiedCallback(true);
+                          setTimeout(() => setCopiedCallback(false), 2000);
+                        }}
+                        style={{
+                          background: copiedCallback ? '#059669' : '#0f172a',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.68rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        {copiedCallback ? <Check size={11} /> : <Copy size={11} />}
+                        <span>{copiedCallback ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                    <div>
+                      4. Save and copy the <strong>OAuth 2.0 Client ID</strong> into your environment variables as <code>X_CLIENT_ID</code>.
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '14px 0 16px' }}>
