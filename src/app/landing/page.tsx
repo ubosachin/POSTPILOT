@@ -28,37 +28,39 @@ export default function LandingPage() {
       <header style={{
         maxWidth: '1240px',
         margin: '0 auto',
-        padding: '24px 20px',
+        padding: '18px 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '16px',
         borderBottom: '1px solid #e2e8f0'
       }}>
-        <PostPilotLogo size={42} subtitle="AI SOCIAL AUTOMATION SAAS" href="/landing" />
+        <PostPilotLogo size={38} subtitle="AI SOCIAL AUTOMATION SAAS" href="/landing" />
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <a href="#features" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 500 }}>Features</a>
-          <a href="#pricing" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 500 }}>Credit Pricing</a>
-          <a href="#security" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 500 }}>Security</a>
-          <Link href="/login" className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.86rem' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <a href="#features" className="hide-on-mobile" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 500 }}>Features</a>
+          <a href="#pricing" className="hide-on-mobile" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 500 }}>Credit Pricing</a>
+          <a href="#security" className="hide-on-mobile" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 500 }}>Security</a>
+          <Link href="/login" className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.84rem' }}>
             Sign In
           </Link>
-          <Link href="/login" className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Link href="/login" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Zap size={14} color="#fbbf24" /> Claim 50 Free Credits
           </Link>
         </nav>
       </header>
 
       {/* Hero Section */}
-      <section style={{ maxWidth: '1080px', margin: '0 auto', padding: '80px 20px 60px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', borderRadius: '20px', background: '#ede9fe', border: '1px solid #c7d2fe', marginBottom: '24px' }}>
-          <Sparkles size={16} color="#4f46e5" />
-          <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#4338ca' }}>
+      <section style={{ maxWidth: '1080px', margin: '0 auto', padding: 'clamp(40px, 8vw, 80px) 20px 60px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', borderRadius: '20px', background: '#ede9fe', border: '1px solid #c7d2fe', marginBottom: '24px', maxWidth: '100%' }}>
+          <Sparkles size={16} color="#4f46e5" style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#4338ca', wordBreak: 'break-word' }}>
             Multi-Tenant SaaS • Credit-Based Engine • Bluesky & X Ready
           </span>
         </div>
 
-        <h1 style={{ fontSize: '3.4rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '24px', color: '#0f172a' }}>
+        <h1 style={{ fontSize: 'clamp(2rem, 5.5vw, 3.4rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '24px', color: '#0f172a' }}>
           Automate Your Social Growth with{' '}
           <span style={{
             background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #2563eb 100%)',
@@ -69,21 +71,21 @@ export default function LandingPage() {
           </span>
         </h1>
 
-        <p style={{ fontSize: '1.2rem', color: '#475569', maxWidth: '760px', margin: '0 auto 36px', lineHeight: 1.6 }}>
+        <p style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: '#475569', maxWidth: '760px', margin: '0 auto 36px', lineHeight: 1.6 }}>
           Generate platform-constrained content for <strong>Bluesky</strong>, <strong>X (Twitter)</strong>, and <strong>Quora</strong>. Schedule with background BullMQ queues, spend atomically tracked credits, and publish with complete peace of mind.
         </p>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <Link href="/login" className="btn btn-primary" style={{ padding: '14px 32px', fontSize: '1rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+          <Link href="/login" className="btn btn-primary" style={{ padding: '14px 28px', fontSize: '0.98rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
             <Zap size={18} color="#fbbf24" /> Start with 50 Free Credits <ArrowRight size={18} />
           </Link>
-          <Link href="/login" className="btn btn-secondary" style={{ padding: '14px 28px', fontSize: '1rem' }}>
+          <Link href="/login" className="btn btn-secondary" style={{ padding: '14px 24px', fontSize: '0.98rem' }}>
             Explore AI Studio
           </Link>
         </div>
 
         {/* Value Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '28px', marginTop: '40px', fontSize: '0.86rem', color: '#475569' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginTop: '40px', fontSize: '0.86rem', color: '#475569', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <CheckCircle2 size={16} color="#059669" /> No Credit Card Required
           </div>
@@ -99,7 +101,7 @@ export default function LandingPage() {
       {/* Feature Highlights Grid */}
       <section id="features" style={{ maxWidth: '1200px', margin: '0 auto', padding: '60px 20px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a' }}>
+          <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 800, color: '#0f172a' }}>
             Engineered for Resilient Social Media Automation
           </h2>
           <p style={{ color: '#64748b', fontSize: '0.96rem', marginTop: '6px' }}>
@@ -107,7 +109,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px' }}>
           
           <div className="glass-panel" style={{ padding: '32px' }}>
             <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '18px' }}>
@@ -195,7 +197,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px' }}>
           {CREDIT_PACKAGES.map((pkg) => (
             <div
               key={pkg.id}

@@ -240,7 +240,7 @@ export default function AutomationsPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '60px' }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div className="page-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Cpu size={28} color="#4f46e5" /> Content Automations & Schedules
@@ -250,7 +250,7 @@ export default function AutomationsPage() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="page-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setActiveTab('list')}
               className={`btn ${activeTab === 'list' ? 'btn-primary' : 'btn-secondary'}`}
@@ -326,7 +326,7 @@ export default function AutomationsPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
                 {automations.map((auto) => {
                   const isActive = auto.status === 'active';
                   const isPaused = auto.status === 'paused';
@@ -424,7 +424,7 @@ export default function AutomationsPage() {
 
         {/* TAB 2: CREATE / EDIT AUTOMATION */}
         {activeTab === 'create' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
+          <div className="grid-2-col-responsive">
             
             {/* Left Column: Form Controls */}
             <div className="glass-panel" style={{ padding: '28px' }}>
@@ -475,7 +475,7 @@ export default function AutomationsPage() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '14px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                       Target Audience
@@ -507,7 +507,7 @@ export default function AutomationsPage() {
                   <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
                     Target Platforms
                   </label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       onClick={() => togglePlatform('bluesky')}
@@ -561,7 +561,7 @@ export default function AutomationsPage() {
                   <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
                     Active Days of Week
                   </label>
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {dayLabels.map((lbl, idx) => {
                       const selected = activeDays.includes(idx);
                       return (
@@ -758,7 +758,7 @@ export default function AutomationsPage() {
 
         {/* TAB 3: DAILY TOPIC MANAGER */}
         {activeTab === 'topics' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '24px' }}>
+          <div className="grid-2-col-responsive">
             {/* Add Date Override */}
             <div className="glass-panel" style={{ padding: '28px' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>

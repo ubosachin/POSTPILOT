@@ -144,7 +144,7 @@ export default function QuoraWorkspacePage() {
           <Sparkles size={16} color="#b92b27" />
           Quick Quora Question Answer Generator
         </h3>
-        <form onSubmit={handleDraftFromTopic} style={{ display: 'flex', gap: '10px' }}>
+        <form onSubmit={handleDraftFromTopic} className="prompt-input-row" style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
             value={newQuestionTopic}
@@ -180,7 +180,7 @@ export default function QuoraWorkspacePage() {
 
             return (
               <div key={item.id} className="glass-panel" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
                       width: '32px',
@@ -227,7 +227,7 @@ export default function QuoraWorkspacePage() {
                 </div>
 
                 {/* Live Question Link / URL Input */}
-                <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="prompt-input-row" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="text"
                     value={publishedUrlInput[item.id] !== undefined ? publishedUrlInput[item.id] : item.quoraQuestionUrl || ''}

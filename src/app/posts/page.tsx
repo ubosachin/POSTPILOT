@@ -96,7 +96,7 @@ export default function PostsPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '60px' }}>
         
         {/* Header & Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div className="page-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Send size={26} color="#4f46e5" /> Content Library & Approval Queue
@@ -106,8 +106,8 @@ export default function PostsPage() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', border: '1px solid #e2e8f0' }}>
+          <div className="page-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
               {(['all', 'draft', 'approved', 'published'] as const).map((filter) => (
                 <button
                   key={filter}
@@ -156,7 +156,7 @@ export default function PostsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {filteredPosts.map((item) => (
               <div key={item.id} className="glass-panel" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
                       {item.topic}
@@ -202,7 +202,7 @@ export default function PostsPage() {
                 </div>
 
                 {/* Platform Variants Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '14px' }}>
                   {item.variants.map((v) => {
                     const isDraft = v.approvalStatus === 'draft';
                     const isApproved = v.approvalStatus === 'approved';

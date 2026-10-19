@@ -276,7 +276,7 @@ export default function SocialAccountsPage() {
 
   return (
     <DashboardLayout>
-      <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="page-header-row" style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.025em' }}>
             Connected Social Accounts
@@ -287,7 +287,7 @@ export default function SocialAccountsPage() {
         </div>
 
         {userRole === 'owner' || userRole === 'admin' ? (
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="page-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setShowBskyModal(true)} className="btn-primary btn-bluesky" style={{ fontSize: '0.86rem' }}>
               <Plus size={16} />
               <span>Connect Bluesky</span>
@@ -346,7 +346,7 @@ export default function SocialAccountsPage() {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
           {accounts.map((acc) => {
             const isTestThis = testResult && testResult.id === acc.id;
 
@@ -499,14 +499,16 @@ export default function SocialAccountsPage() {
           zIndex: 210,
           padding: '20px'
         }}>
-          <div className="glass-panel" style={{
+          <div className="glass-panel modal-dialog-content" style={{
             width: '100%',
             maxWidth: '520px',
-            padding: '28px',
+            padding: 'clamp(18px, 4vw, 28px)',
             background: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)'
+            boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -770,14 +772,16 @@ export default function SocialAccountsPage() {
           zIndex: 220,
           padding: '20px'
         }}>
-          <div className="glass-panel" style={{
+          <div className="glass-panel modal-dialog-content" style={{
             width: '100%',
             maxWidth: '430px',
-            padding: '26px',
+            padding: 'clamp(18px, 4vw, 26px)',
             background: '#ffffff',
             border: '1px solid #fee2e2',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 20px 40px -15px rgba(220, 38, 38, 0.15)'
+            boxShadow: '0 20px 40px -15px rgba(220, 38, 38, 0.15)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
               <div style={{
@@ -866,7 +870,7 @@ export default function SocialAccountsPage() {
           zIndex: 200,
           padding: '20px'
         }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '440px', padding: '24px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)' }}>
+          <div className="glass-panel modal-dialog-content" style={{ width: '100%', maxWidth: '440px', padding: 'clamp(18px, 4vw, 24px)', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
               Connect Bluesky Account
             </h3>
@@ -943,7 +947,7 @@ export default function SocialAccountsPage() {
           zIndex: 200,
           padding: '20px'
         }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', padding: '24px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)' }}>
+          <div className="glass-panel modal-dialog-content" style={{ width: '100%', maxWidth: '480px', padding: 'clamp(18px, 4vw, 24px)', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
               Connect X Account (v2 API)
             </h3>

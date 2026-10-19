@@ -28,7 +28,8 @@ import {
   ExternalLink,
   Plus,
   AlertCircle,
-  Check
+  Check,
+  Menu
 } from 'lucide-react';
 import PostPilotLogo from '@/components/PostPilotLogo';
 import { UserRole } from '@/types';
@@ -41,6 +42,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [creditBalance, setCreditBalance] = useState<number>(100);
   const [userName, setUserName] = useState('Alex Rivera');
@@ -164,6 +166,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Check query params for onboarding trigger and role errors
   useEffect(() => {
+    setMobileMenuOpen(false);
     fetchSocialAccounts();
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -270,12 +273,100 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="app-container">
+      {/* Mobile Topbar Navigation */}
+      <header className="mobile-topbar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#0f172a',
+              cursor: 'pointer'
+            }}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <PostPilotLogo size={28} showText={true} href="/" />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Link href="/billing" style={{ textDecoration: 'none' }}>
+            <span style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: '#ede9fe',
+              color: '#6d28d9',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              padding: '4px 8px',
+              borderRadius: '6px',
+              border: '1px solid #c4b5fd'
+            }}>
+              <Zap size={12} color="#7c3aed" /> {creditBalance} cr
+            </span>
+          </Link>
+
+          <Link href="/profile" style={{ textDecoration: 'none' }}>
+            <div style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: '0.74rem',
+              color: '#ffffff'
+            }}>
+              {userName.substring(0, 2).toUpperCase()}
+            </div>
+          </Link>
+        </div>
+      </header>
+
+      {/* Mobile Drawer Backdrop */}
+      <div
+        className={`sidebar-backdrop ${mobileMenuOpen ? 'active' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         
         {/* Brand Header */}
-        <div style={{ marginBottom: '22px', padding: '0 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px', padding: '0 4px' }}>
           <PostPilotLogo size={36} href="/" />
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              background: '#f1f5f9',
+              border: 'none',
+              borderRadius: '6px',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b',
+              cursor: 'pointer'
+            }}
+            className="hide-on-desktop"
+            aria-label="Close navigation drawer"
+          >
+            <X size={16} />
+          </button>
         </div>
 
         {/* Live Credit Wallet Pill */}
@@ -435,6 +526,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
                 className={`nav-link ${isActive ? 'active' : ''}`}
               >
                 <Icon size={18} style={{ color: isActive ? '#4f46e5' : '#64748b' }} />
@@ -624,15 +716,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           justifyContent: 'center',
           padding: '20px'
         }}>
-          <div className="glass-panel" style={{
+          <div className="glass-panel modal-dialog-content" style={{
             maxWidth: '540px',
             width: '100%',
-            padding: '36px',
+            padding: 'clamp(20px, 5vw, 36px)',
             position: 'relative',
             background: '#ffffff',
             boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15), 0 0 1px 1px rgba(0, 0, 0, 0.05)',
             border: '1px solid #e2e8f0',
-            borderRadius: 'var(--radius-lg)'
+            borderRadius: 'var(--radius-lg)',
+            maxHeight: '92vh',
+            overflowY: 'auto'
           }}>
             <button
               onClick={() => setShowOnboarding(false)}

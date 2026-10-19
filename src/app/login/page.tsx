@@ -119,7 +119,7 @@ function LoginForm() {
     <div className="glass-panel" style={{
       maxWidth: '480px',
       width: '100%',
-      padding: '36px 30px',
+      padding: 'clamp(24px, 5vw, 36px) clamp(16px, 4vw, 30px)',
       textAlign: 'center',
       position: 'relative',
       background: '#ffffff',
@@ -240,7 +240,7 @@ function LoginForm() {
         }}>
           Developer Testing Sandbox (Quick Switch) ▾
         </summary>
-        <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+        <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '8px' }}>
           {demoRoles.map((r) => {
             const IconComponent = r.icon;
             return (

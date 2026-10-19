@@ -336,9 +336,9 @@ export default function StudioPage() {
   return (
     <DashboardLayout>
       {/* Header Banner */}
-      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="page-header-row" style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
             <span className="badge badge-bluesky">
               <Sparkles size={12} /> Autonomous Publishing Engine
             </span>
@@ -355,7 +355,7 @@ export default function StudioPage() {
         </div>
 
         {/* Studio Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="page-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setShowBrandDrawer(!showBrandDrawer)}
             className="btn-secondary"
@@ -427,7 +427,7 @@ export default function StudioPage() {
       {/* 8-Point Production Overview Bar */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))',
         gap: '12px',
         marginBottom: '24px'
       }}>
@@ -499,7 +499,7 @@ export default function StudioPage() {
             <button onClick={() => setShowBrandDrawer(false)} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '28px', height: '28px', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', color: '#475569', fontWeight: 600, marginBottom: '6px' }}>Preset Tone</label>
               <select
@@ -587,7 +587,9 @@ export default function StudioPage() {
           marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <CheckCircle2 size={24} color="#059669" />
@@ -636,7 +638,7 @@ export default function StudioPage() {
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
             What topic or insight do you want to publish today?
           </label>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div className="prompt-input-row" style={{ display: 'flex', gap: '12px' }}>
             <input
               type="text"
               value={topic}
@@ -717,7 +719,7 @@ export default function StudioPage() {
       {/* Generated Platform Drafts Preview & Direct Actions */}
       {variants.length > 0 && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>Platform-Tuned Variations</span>
               <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
@@ -730,10 +732,10 @@ export default function StudioPage() {
           </div>
 
           {previewMode === 'cards' ? (
-            <div style={{
+            <div className="cards-grid-mobile" style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-              gap: '24px'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
+              gap: '20px'
             }}>
               {variants.map((v) => {
                 const charCount = v.text.length;
@@ -1106,7 +1108,17 @@ export default function StudioPage() {
           zIndex: 200,
           padding: '20px'
         }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '440px', padding: '24px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)' }}>
+          <div className="glass-panel modal-dialog-content" style={{
+            width: '100%',
+            maxWidth: '440px',
+            padding: 'clamp(20px, 4vw, 24px)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.15)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
               Schedule Publication
             </h3>

@@ -154,7 +154,7 @@ export default function BillingPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '60px' }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div className="page-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CreditCard size={28} color="#4f46e5" /> Credit Wallet & Billing
@@ -164,7 +164,7 @@ export default function BillingPage() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="page-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setActiveTab('credits')}
               className={`btn ${activeTab === 'credits' ? 'btn-primary' : 'btn-secondary'}`}
@@ -205,7 +205,7 @@ export default function BillingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             
             {/* Wallet Stat Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px' }}>
+            <div className="grid-4-col-responsive">
               <div className="glass-panel" style={{ padding: '24px', borderLeft: '4px solid #4f46e5' }}>
                 <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.04em' }}>
                   AVAILABLE BALANCE
@@ -275,7 +275,7 @@ export default function BillingPage() {
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
                 {packages.map((pkg) => (
                   <div
                     key={pkg.id}
@@ -379,11 +379,12 @@ export default function BillingPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          gap: '16px'
+                          gap: '16px',
+                          flexWrap: 'wrap'
                         }}
                       >
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                             <span className={`badge ${
                               entry.type === 'signup_grant' || entry.type === 'purchase' ? 'badge-success' :
                               entry.type === 'consumption' ? 'badge-neutral' :
@@ -391,7 +392,7 @@ export default function BillingPage() {
                             }`} style={{ fontSize: '0.65rem' }}>
                               {entry.type.toUpperCase().replace('_', ' ')}
                             </span>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#64748b' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#64748b', wordBreak: 'break-all' }}>
                               {entry.idempotencyKey}
                             </span>
                           </div>
@@ -440,7 +441,7 @@ export default function BillingPage() {
                 <span className="badge badge-success">ACTIVE SUBSCRIPTION</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '20px' }}>
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontSize: '0.86rem', color: '#64748b' }}>AI Drafts Generated</span>
@@ -492,7 +493,7 @@ export default function BillingPage() {
             </div>
 
             {/* Plans List */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px' }}>
               {data?.plans.map((p) => {
                 const isCurrent = data.currentPlan === p.id;
                 return (

@@ -149,7 +149,7 @@ export default function ProfilePage() {
       <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '60px' }}>
         
         {/* Header Breadcrumbs & Actions */}
-        <div style={{
+        <div className="page-header-row" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -166,7 +166,7 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="page-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={fetchProfile}
               style={{
@@ -254,7 +254,7 @@ export default function ProfilePage() {
         <div style={{
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           borderRadius: '16px',
-          padding: '28px 32px',
+          padding: 'clamp(18px, 4vw, 28px)',
           color: '#ffffff',
           marginBottom: '28px',
           position: 'relative',
@@ -387,11 +387,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Main Grid: Left Column Form, Right Column Context */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '24px'
-        }}>
+        <div className="grid-2-col-responsive">
           
           {/* SECTION 1: Personal Information Edit Form */}
           <div style={{

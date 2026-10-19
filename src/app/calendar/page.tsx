@@ -84,7 +84,7 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout>
-      <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="page-header-row" style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.025em' }}>
             Publishing Queue & Calendar
@@ -94,7 +94,7 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="page-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {/* View Mode Toggle */}
           <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', border: '1px solid #e2e8f0' }}>
             <button
@@ -147,7 +147,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
         {(['all', 'scheduled', 'published', 'failed'] as const).map((tab) => (
           <button
             key={tab}
@@ -186,8 +186,8 @@ export default function CalendarPage() {
         </div>
       ) : viewMode === 'week' ? (
         /* Week Grid View */
-        <div className="glass-panel" style={{ padding: '24px', overflowX: 'auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(150px, 1fr))', gap: '14px' }}>
+        <div className="glass-panel table-responsive" style={{ padding: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(150px, 1fr))', gap: '14px', minWidth: '800px' }}>
             {weekDays.map((day, idx) => (
               <div
                 key={day}
@@ -315,8 +315,8 @@ export default function CalendarPage() {
             return (
               <div key={job.id} className="glass-panel" style={{ padding: '20px 24px' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-                  <div style={{ flex: 1, minWidth: '280px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{ flex: 1, minWidth: 'min(100%, 280px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
                       <span className={`badge ${job.platform === 'bluesky' ? 'badge-bluesky' : 'badge-x'}`}>
                         {job.platform.toUpperCase()}
                       </span>
@@ -352,7 +352,9 @@ export default function CalendarPage() {
                           alignItems: 'center',
                           gap: '6px',
                           textDecoration: 'underline',
-                          fontWeight: 600
+                          fontWeight: 600,
+                          wordBreak: 'break-all',
+                          maxWidth: '100%'
                         }}
                       >
                         <span>Confirmed post URL: {job.postUrl}</span>
