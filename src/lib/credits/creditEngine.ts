@@ -27,10 +27,60 @@ export interface CommitCreditResult {
 
 export class CreditEngine {
   /**
-   * Retrieves or initializes a workspace credit wallet
+   * Retrieves or initializes a workspace credit wallet with MongoDB sync
    */
   async getWallet(workspaceId: string): Promise<CreditWallet> {
-    return memoryStore.getCreditWallet(workspaceId);
+    // 1. Ensure DB connection
+    try {
+      const { connectToDatabase } = await import('@/lib/db');
+      await connectToDatabase();
+    } catch {
+      // fallback
+    }
+
+    // 2. Check memoryStore first
+    let wallet = memoryStore.creditWallets.get(workspaceId);
+
+    // 3. If wallet not found or has 0 balance, check persistent MongoDB
+    if (!wallet || wallet.balance === 0) {
+      try {
+        const { CreditWalletModel } = await import('@/lib/models');
+        const dbWallet = await CreditWalletModel.findOne({ workspaceId }).lean();
+        if (dbWallet && dbWallet.balance > 0) {
+          wallet = {
+            id: (dbWallet as any).id || (dbWallet as any)._id?.toString() || `cw_${workspaceId}`,
+            workspaceId: dbWallet.workspaceId,
+            balance: dbWallet.balance,
+            reservedCredits: dbWallet.reservedCredits || 0,
+            lifetimeGranted: dbWallet.lifetimeGranted || 0,
+            lifetimePurchased: dbWallet.lifetimePurchased || 0,
+            lifetimeSpent: dbWallet.lifetimeSpent || 0,
+            updatedAt: dbWallet.updatedAt || new Date(),
+          };
+          memoryStore.creditWallets.set(workspaceId, wallet);
+          return wallet;
+        }
+      } catch (err) {
+        console.warn('[CreditEngine] Direct MongoDB wallet check error:', err);
+      }
+    }
+
+    // 4. If still not in memoryStore, initialize
+    if (!wallet) {
+      wallet = memoryStore.getCreditWallet(workspaceId);
+    }
+
+    // 5. If this wallet has 0 lifetime grants and 0 balance, auto-grant the 50 free signup credits
+    if (wallet.lifetimeGranted === 0 && wallet.balance === 0) {
+      const allowance = CREDIT_POLICY.DEFAULT_FREE_SIGNUP_CREDITS;
+      wallet.balance = allowance;
+      wallet.lifetimeGranted = allowance;
+      wallet.updatedAt = new Date();
+      memoryStore.creditWallets.set(workspaceId, wallet);
+      persistenceBridge.persistCreditWallet(wallet).catch(() => {});
+    }
+
+    return wallet;
   }
 
   /**
@@ -107,8 +157,9 @@ export class CreditEngine {
     purpose: string, 
     idempotencyKey: string
   ): Promise<ReserveCreditResult> {
+    const wallet = await this.getWallet(workspaceId);
+
     if (amount <= 0) {
-      const wallet = memoryStore.getCreditWallet(workspaceId);
       return { success: true, availableBalance: wallet.balance };
     }
 
@@ -117,11 +168,8 @@ export class CreditEngine {
       (r) => r.workspaceId === workspaceId && r.purpose === purpose && r.status === 'active'
     );
     if (existingRes) {
-      const wallet = memoryStore.getCreditWallet(workspaceId);
       return { success: true, reservation: existingRes, availableBalance: wallet.balance };
     }
-
-    const wallet = memoryStore.getCreditWallet(workspaceId);
 
     if (wallet.balance < amount) {
       return {
@@ -148,6 +196,7 @@ export class CreditEngine {
     };
 
     memoryStore.creditReservations.set(reservationId, reservation);
+    persistenceBridge.persistCreditWallet(wallet).catch(() => {});
 
     return {
       success: true,

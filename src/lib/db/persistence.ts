@@ -233,9 +233,14 @@ class PersistenceBridge {
   }
 
   async persistCreditWallet(wallet: CreditWallet): Promise<void> {
-    if (!this.isMongoActive()) return;
     try {
-      await CreditWalletModel.findOneAndUpdate({ workspaceId: wallet.workspaceId }, wallet, { upsert: true });
+      if (!this.isMongoActive()) {
+        const { connectToDatabase } = await import('./index');
+        await connectToDatabase();
+      }
+      if (this.isMongoActive()) {
+        await CreditWalletModel.findOneAndUpdate({ workspaceId: wallet.workspaceId }, wallet, { upsert: true });
+      }
     } catch (e) {
       console.warn('[PersistenceBridge] Error persisting credit wallet:', (e as Error).message);
     }

@@ -94,6 +94,14 @@ export async function GET(req: NextRequest) {
     const name = profile.name || email.split('@')[0];
     const avatar = profile.picture || undefined;
 
+    // Ensure database connection
+    try {
+      const { connectToDatabase } = await import('@/lib/db');
+      await connectToDatabase();
+    } catch {
+      // fallback
+    }
+
     // 4. Find or create user
     let isNewUser = false;
     let user = Array.from(memoryStore.users.values()).find((u) => u.email.toLowerCase() === email);

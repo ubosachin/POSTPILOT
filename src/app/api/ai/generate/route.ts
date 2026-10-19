@@ -17,6 +17,15 @@ export async function POST(req: NextRequest) {
       return forbiddenResponse('Viewers do not have permission to generate content. Please contact an admin.');
     }
     const workspaceId = session.workspaceId;
+
+    // Ensure database connection and persistent wallet state
+    try {
+      const { connectToDatabase } = await import('@/lib/db');
+      await connectToDatabase();
+    } catch {
+      // fallback
+    }
+
     const body = await req.json();
 
     const topic = body.topic?.trim();
