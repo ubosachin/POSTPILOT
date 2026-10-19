@@ -42,7 +42,7 @@ export function validatePlatformVariant(platform: Platform, text: string): strin
 async function callGemini(prompt: string, apiKey: string): Promise<string | null> {
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
