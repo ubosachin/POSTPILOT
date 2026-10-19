@@ -939,7 +939,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             </span>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <div className="grid-2-col-mobile-stack" style={{ gap: '8px' }}>
                             <div>
                               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: '2px' }}>
                                 API Key (Optional)

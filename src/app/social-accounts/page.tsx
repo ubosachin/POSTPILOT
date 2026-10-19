@@ -685,7 +685,7 @@ export default function SocialAccountsPage() {
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div className="grid-2-col-mobile-stack">
                       <div>
                         <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
                           API Key
@@ -713,7 +713,7 @@ export default function SocialAccountsPage() {
                         />
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div className="grid-2-col-mobile-stack">
                       <div>
                         <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 600, marginBottom: '4px' }}>
                           Access Token
@@ -1194,7 +1194,7 @@ export default function SocialAccountsPage() {
                       Only fill these in if you want to use your own Twitter Developer Portal application credentials instead of PostPilot&apos;s verified gateway.
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                    <div className="grid-2-col-mobile-stack" style={{ marginBottom: '8px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.74rem', color: '#475569', fontWeight: 600, marginBottom: '2px' }}>
                           API Key
@@ -1223,7 +1223,7 @@ export default function SocialAccountsPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div className="grid-2-col-mobile-stack">
                       <div>
                         <label style={{ display: 'block', fontSize: '0.74rem', color: '#475569', fontWeight: 600, marginBottom: '2px' }}>
                           Access Token

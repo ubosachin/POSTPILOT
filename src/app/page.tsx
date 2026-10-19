@@ -425,12 +425,7 @@ export default function StudioPage() {
       )}
 
       {/* 8-Point Production Overview Bar */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))',
-        gap: '12px',
-        marginBottom: '24px'
-      }}>
+      <div className="stats-overview-grid" style={{ marginBottom: '24px' }}>
         {/* Credit Balance */}
         <div className="glass-panel" style={{ padding: '12px 14px', borderLeft: '4px solid #6366f1' }}>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.04em' }}>CREDIT WALLET</div>
@@ -546,28 +541,28 @@ export default function StudioPage() {
 
       {/* Vertical Slice Pipeline Indicator */}
       <div className="glass-panel" style={{ padding: '16px 20px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="pipeline-container">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#10b981', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
               ✓
             </div>
             <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a' }}>1. Workspace Context</span>
           </div>
-          <ArrowRight size={14} color="#94a3b8" />
+          <span className="pipeline-step-arrow"><ArrowRight size={14} color="#94a3b8" /></span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: topic ? '#10b981' : '#4f46e5', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
               2
             </div>
             <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a' }}>2. Enter Topic</span>
           </div>
-          <ArrowRight size={14} color="#94a3b8" />
+          <span className="pipeline-step-arrow"><ArrowRight size={14} color="#94a3b8" /></span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: variants.length > 0 ? '#10b981' : '#cbd5e1', color: variants.length > 0 ? '#ffffff' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
               3
             </div>
             <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a' }}>3. Generate Drafts</span>
           </div>
-          <ArrowRight size={14} color="#94a3b8" />
+          <span className="pipeline-step-arrow"><ArrowRight size={14} color="#94a3b8" /></span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: publishedResult ? '#10b981' : '#cbd5e1', color: publishedResult ? '#ffffff' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
               4
@@ -901,7 +896,7 @@ export default function StudioPage() {
 
                     {/* Actions Bar */}
                     {v.platform === 'bluesky' && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div className="card-actions-row">
                         <button
                           onClick={() => handlePublishNow(v)}
                           disabled={publishingPlatform === 'bluesky' || isOverLimit}
@@ -942,7 +937,7 @@ export default function StudioPage() {
                     )}
 
                     {v.platform === 'x' && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div className="card-actions-row">
                         <button
                           onClick={() => handlePublishNow(v)}
                           disabled={publishingPlatform === 'x' || isOverLimit}

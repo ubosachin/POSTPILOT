@@ -187,6 +187,9 @@ export default function CalendarPage() {
       ) : viewMode === 'week' ? (
         /* Week Grid View */
         <div className="glass-panel table-responsive" style={{ padding: '24px' }}>
+          <div className="table-scroll-hint">
+            <span>← Swipe horizontally to view full 7-day week schedule →</span>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(150px, 1fr))', gap: '14px', minWidth: '800px' }}>
             {weekDays.map((day, idx) => (
               <div

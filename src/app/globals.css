@@ -374,6 +374,10 @@ button {
   -webkit-overflow-scrolling: touch;
 }
 
+.table-scroll-hint {
+  display: none;
+}
+
 /* Responsive Grid Helpers */
 .grid-2-col-responsive {
   display: grid;
@@ -391,6 +395,48 @@ button {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+}
+
+.grid-2-col-mobile-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stats-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: 12px;
+}
+
+/* Card Actions Row on Cards & Modals */
+.card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Pipeline Flow Indicator */
+.pipeline-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.pipeline-step-arrow {
+  display: flex;
+  align-items: center;
+}
+
+/* Safe word break & text wrapping */
+.break-word-safe {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Custom Scrollbar */
@@ -485,6 +531,11 @@ button {
 
 /* Small Tablet / Mobile Landscape Breakpoint (768px and below) */
 @media (max-width: 768px) {
+  /* Prevent iOS Safari 16px auto-zoom */
+  input, select, textarea, .input-field {
+    font-size: 16px !important;
+  }
+
   .main-content {
     padding: 72px 16px 24px;
   }
@@ -518,6 +569,11 @@ button {
   .btn-primary, .btn-secondary {
     padding: 9px 16px;
     font-size: 0.85rem;
+    min-height: 42px;
+  }
+
+  .nav-link {
+    min-height: 44px;
   }
 
   /* Prompt input stacking */
@@ -526,9 +582,11 @@ button {
     align-items: stretch !important;
   }
 
-  .prompt-input-row button {
+  .prompt-input-row button,
+  .prompt-input-row a {
     width: 100% !important;
     min-width: unset !important;
+    justify-content: center !important;
   }
 
   /* Responsive Cards Header */
@@ -553,8 +611,64 @@ button {
     overflow-y: auto !important;
   }
 
+  /* Horizontal swipe hint for tables and calendar */
+  .table-scroll-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    color: #4f46e5;
+    background: #eef2ff;
+    border: 1px dashed #c7d2fe;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  /* Pipeline indicators on tablets/phones */
+  .pipeline-step-arrow {
+    display: none !important;
+  }
+
+  .pipeline-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
   .hide-on-mobile {
     display: none !important;
+  }
+}
+
+/* Compact Mobile (540px and below - Standard Mobile / Phablets) */
+@media (max-width: 540px) {
+  .grid-2-col-mobile-stack {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .stats-overview-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .card-actions-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .card-actions-row > button,
+  .card-actions-row > a,
+  .card-actions-row > .btn,
+  .card-actions-row > .btn-primary,
+  .card-actions-row > .btn-secondary {
+    width: 100% !important;
+    min-width: unset !important;
+    justify-content: center !important;
   }
 }
 
@@ -589,4 +703,28 @@ button {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Ultra Compact (360px and below - Small screens / Foldables) */
+@media (max-width: 360px) {
+  .main-content {
+    padding: 64px 8px 16px;
+  }
+
+  .stats-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pipeline-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hide-on-compact {
+    display: none !important;
+  }
+
+  h1 {
+    font-size: 1.3rem !important;
+  }
+}
+
 
