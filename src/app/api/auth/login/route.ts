@@ -7,10 +7,26 @@ import { creditEngine } from '@/lib/credits/creditEngine';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const rawEmail = body.email || 'alex@postpilot.io';
+    const rawEmail = body.email;
+
+    if (!rawEmail || typeof rawEmail !== 'string' || !rawEmail.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Email address is required.' },
+        { status: 400 }
+      );
+    }
+
     const email = rawEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { success: false, error: 'Please enter a valid email address.' },
+        { status: 400 }
+      );
+    }
+
     const name = body.name || email.split('@')[0];
-    const authProvider = body.authProvider || 'google';
+    const authProvider = body.authProvider || 'local';
 
     let isNewUser = false;
     let user = Array.from(memoryStore.users.values()).find((u) => u.email.toLowerCase() === email);

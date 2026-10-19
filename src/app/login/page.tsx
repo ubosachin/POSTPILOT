@@ -10,26 +10,54 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get('redirect') || '/';
+  const errorParam = searchParams.get('error');
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (errorParam) {
+      if (errorParam === 'google_not_configured') {
+        setError('Google OAuth is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env.local file.');
+      } else if (errorParam === 'invalid_state') {
+        setError('Login session expired or security verification failed. Please try signing in again.');
+      } else if (errorParam === 'email_not_verified') {
+        setError('Your Google account does not have a verified email. Please verify with Google and try again.');
+      } else if (errorParam === 'token_exchange_failed') {
+        setError('Google authentication failed. Check that your redirect URI in Google Cloud Console matches /api/auth/google/callback.');
+      } else {
+        setError(`Google sign-in error: ${errorParam}`);
+      }
+    }
+  }, [errorParam]);
+
+  const handleGoogleLogin = () => {
+    setLoading(true);
+    setError(null);
+    window.location.href = '/api/auth/google';
+  };
+
   const handleLogin = async (customEmail?: string) => {
+    const targetEmail = (customEmail || email).trim();
+    if (!targetEmail) {
+      setError('Please enter a valid work email address.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    const userEmail = customEmail || email.trim() || 'alex@postpilot.io';
-    const userName = userEmail.split('@')[0].replace(/[._]/g, ' ');
+    const userName = targetEmail.split('@')[0].replace(/[._]/g, ' ');
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: userEmail,
+          email: targetEmail,
           name: userName.charAt(0).toUpperCase() + userName.slice(1),
-          authProvider: 'google',
+          authProvider: 'local',
         }),
       });
 
@@ -135,7 +163,7 @@ function LoginForm() {
 
       {/* Google One-Click CTA */}
       <button
-        onClick={() => handleLogin()}
+        onClick={handleGoogleLogin}
         disabled={loading}
         className="btn"
         style={{

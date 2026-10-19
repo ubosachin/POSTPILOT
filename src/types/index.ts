@@ -24,6 +24,7 @@ export interface User {
   email: string;
   name: string;
   authProvider: 'local' | 'google' | 'github';
+  avatar?: string;
   createdAt: Date;
 }
 

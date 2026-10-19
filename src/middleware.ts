@@ -34,6 +34,8 @@ const PUBLIC_PATHS = [
   '/api/cron/process-jobs',
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/auth/google',
+  '/api/auth/google/callback',
   '/api/v1/webhooks/razorpay',
   '/api/billing/webhook',
 ];

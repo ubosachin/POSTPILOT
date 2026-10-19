@@ -15,6 +15,8 @@ const configSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;
@@ -36,6 +38,8 @@ function parseEnv(): AppConfig {
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || undefined,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || undefined,
     RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || undefined,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || undefined,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || undefined,
   };
 
   const result = configSchema.safeParse(rawEnv);
