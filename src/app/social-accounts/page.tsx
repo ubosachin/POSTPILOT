@@ -15,7 +15,8 @@ import {
   X,
   AlertCircle,
   Key,
-  CheckCircle
+  CheckCircle,
+  ExternalLink
 } from 'lucide-react';
 import { SocialAccount } from '@/types';
 
@@ -89,6 +90,29 @@ export default function SocialAccountsPage() {
         if (d.role) setUserRole(d.role);
       })
       .catch(() => {});
+
+    // Check for OAuth callback status in URL query parameters
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const success = urlParams.get('success');
+      const handle = urlParams.get('handle');
+      const error = urlParams.get('error');
+
+      if (success === 'x_connected') {
+        showToast(`Connected X account (@${handle || ''}) successfully via official OAuth 2.0!`, 'success');
+        window.history.replaceState({}, '', '/social-accounts');
+        fetchAccounts();
+      } else if (error) {
+        let msg = `OAuth connection notice: ${error}`;
+        if (error === 'x_oauth_not_configured' || error === 'x_not_configured') {
+          msg = 'Twitter OAuth 2.0 Client ID is not configured in server environment yet. Set X_CLIENT_ID & X_CLIENT_SECRET or use manual developer keys.';
+        } else if (error === 'invalid_state') {
+          msg = 'Security token expired. Please try connecting X again.';
+        }
+        showToast(msg, 'error');
+        window.history.replaceState({}, '', '/social-accounts');
+      }
+    }
   }, []);
 
   const handleTestConnection = async (id: string) => {
@@ -979,20 +1003,52 @@ export default function SocialAccountsPage() {
               </button>
             </div>
 
+            {/* 1-Click Official OAuth 2.0 Authorization */}
             <div style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              borderRadius: '8px',
-              padding: '10px 14px',
-              fontSize: '0.82rem',
-              color: '#166534',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '18px',
+              textAlign: 'center'
             }}>
-              <CheckCircle size={16} color="#16a34a" style={{ flexShrink: 0 }} />
-              <span><strong>Instant Connect:</strong> PostPilot verified server gateway handles publishing automatically. Just enter your handle below!</span>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                Recommended: 1-Click Official Authorization
+              </div>
+              <p style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '14px', lineHeight: 1.45 }}>
+                Authorizes PostPilot securely on Twitter / X to publish tweets directly to your personal account. Zero technical keys required.
+              </p>
+
+              <a
+                href="/api/auth/x"
+                className="btn-primary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: '#000000',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  padding: '10px 18px',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}
+              >
+                <span style={{ fontSize: '1rem', fontWeight: 900 }}>𝕏</span>
+                <span>Authorize with X (Twitter)</span>
+                <ExternalLink size={14} style={{ opacity: 0.7 }} />
+              </a>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '14px 0 16px' }}>
+              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+              <span style={{ fontSize: '0.74rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>
+                Or connect manually with handle
+              </span>
+              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
             </div>
 
             <form onSubmit={handleConnectX}>

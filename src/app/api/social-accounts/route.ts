@@ -55,13 +55,15 @@ export async function POST(req: NextRequest) {
 
     // Auto-fill X credentials from server environment if not provided
     if (platform === 'x') {
-      if (!credentials.apiKey && process.env.X_API_KEY) credentials.apiKey = process.env.X_API_KEY;
-      if (!credentials.apiSecret && process.env.X_API_SECRET) credentials.apiSecret = process.env.X_API_SECRET;
-      if (!credentials.accessToken && process.env.X_ACCESS_TOKEN) credentials.accessToken = process.env.X_ACCESS_TOKEN;
-      if (!credentials.accessTokenSecret && process.env.X_ACCESS_TOKEN_SECRET) credentials.accessTokenSecret = process.env.X_ACCESS_TOKEN_SECRET;
+      if (!credentials.oauth2Token) {
+        if (!credentials.apiKey && process.env.X_API_KEY) credentials.apiKey = process.env.X_API_KEY;
+        if (!credentials.apiSecret && process.env.X_API_SECRET) credentials.apiSecret = process.env.X_API_SECRET;
+        if (!credentials.accessToken && process.env.X_ACCESS_TOKEN) credentials.accessToken = process.env.X_ACCESS_TOKEN;
+        if (!credentials.accessTokenSecret && process.env.X_ACCESS_TOKEN_SECRET) credentials.accessTokenSecret = process.env.X_ACCESS_TOKEN_SECRET;
 
-      if (!credentials.apiKey) {
-        return NextResponse.json({ success: false, error: 'X API Key and Secret are required' }, { status: 400 });
+        if (!credentials.apiKey) {
+          return NextResponse.json({ success: false, error: 'X API Key and Secret are required' }, { status: 400 });
+        }
       }
     } else if (platform === 'bluesky') {
       if (!credentials.password) {

@@ -6,6 +6,12 @@ export interface XCredentials {
   accessToken?: string;
   accessTokenSecret?: string;
   bearerToken?: string;
+  oauth2Token?: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  tokenType?: string;
+  twitterUserId?: string;
+  scope?: string;
   isSandbox?: boolean;
 }
 
@@ -81,7 +87,10 @@ export class XAdapter {
     }
 
     // Sandbox / Simulation fallback when test mode or placeholder credentials
-    if (creds.isSandbox || !creds.apiKey || creds.apiKey.startsWith('test-') || !creds.accessToken) {
+    const hasOAuth2 = Boolean(creds.oauth2Token && creds.oauth2Token.trim().length > 0);
+    const hasOAuth1 = Boolean(creds.apiKey && creds.accessToken && !creds.apiKey.startsWith('test-'));
+
+    if (creds.isSandbox || (!hasOAuth2 && !hasOAuth1)) {
       const mockTweetId = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
       return {
         success: true,
@@ -92,7 +101,12 @@ export class XAdapter {
 
     try {
       const endpoint = 'https://api.x.com/2/tweets';
-      const authHeader = this.generateOAuth1Header('POST', endpoint, creds);
+      let authHeader: string;
+      if (hasOAuth2) {
+        authHeader = `Bearer ${creds.oauth2Token}`;
+      } else {
+        authHeader = this.generateOAuth1Header('POST', endpoint, creds);
+      }
 
       const res = await fetch(endpoint, {
         method: 'POST',
