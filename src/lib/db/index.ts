@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { memoryStore, MemoryStore } from '@/lib/db/memoryStore';
+import { memoryStore, MemoryStore } from './memoryStore';
 import { persistenceBridge } from './persistence';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/postpilot';
